@@ -1,0 +1,8 @@
+NodeIP: 192.168.1.1
+NodePort: 6433
+NodeUser: username
+NodePass: password
+WalletsToMonitor: SomeWallet
+ServerPort: 11235
+SMSNumber: 5558675309
+SMSWarnTimeSeconds: 500

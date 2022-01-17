@@ -1,0 +1,108 @@
+    <html>
+      <head>
+        <meta http-equiv="refresh" content="15" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <title>DMO Mining Monitor</title>
+        <style>
+
+          .styled-table {
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 0.9em;
+            font-family: sans-serif;
+            min-width: 400px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+          }
+          .wallet-info {
+              font-size: 2vw;
+              white-space: pre;
+          }
+
+          @media screen and (max-device-width: 600px) {
+            .body {
+              width: 100%;
+            }
+            .styled-table {
+              min-width: 90%;
+              font-size: 3vw;
+            }
+            .page-title {
+              font-size: 5vw;
+            }
+            .page-subtitle {
+              margin-top: 5px;
+              font-size: 4vw;
+            }
+            .wallet-info {
+              font-size: 2.5vw;
+            }
+            .wallet-balance {
+              font-size: 3vw;
+            }
+          }
+
+
+          .warn {
+            background-color: #AA3333
+          }
+          .styled-table thead tr {
+            background-color: #009879;
+            color: #ffffff;
+            text-align: left;
+          }
+          .styled-table th,
+          .styled-table td {
+            padding: 12px 15px;
+          }
+          .styled-table tbody tr {
+            border-bottom: 1px solid #dddddd;
+          }
+
+          .styled-table tbody tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+          }
+
+          .styled-table tbody tr:last-of-type {
+            border-bottom: 2px solid #009879;
+            background-color: #888;
+            font-weight: bold;
+          }
+        </style>
+      </head>
+      
+      <body>
+        <center>
+	      <h2 class="page-title">DMO Mining Monitor</h2>
+        <h3 class="page-subtitle">Uptime: {{.Uptime}}</h3>
+
+        <div class="miners-container">
+          <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Miner</th>
+              <th>Hashrate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range $name, $stats := .MinerList}}
+            <tr {{if $stats.Late}}class="warn"{{end}}>
+              <td>{{$name}}</td> 
+              <td>{{$stats.HashrateStr}}</td>
+            </tr>
+            {{end}}
+            <tr>
+              <td>Total Hashrate</td>
+              <td>{{.Totalhash}}</td>
+            </tr>
+          </tbody>
+          </table>
+
+        </div>
+        <div class="wallet-balance">Current Mining Wallet Balance: {{.Walletbalance}} DMO</div>
+        <div class="wallet-info">
+          {{.Walletstats}}
+        </div>
+        </center>
+      </body>
+    </html>
+
