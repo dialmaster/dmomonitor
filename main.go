@@ -1,17 +1,5 @@
 package main
 
-// DMO mining monitor
-// Will simply take incoming requests from miners, with their name and their current hashrate (and other stats) 
-// And will display a table with a list of all miners running, the last time they reported in, their hashrate at that time, and the total hashrate of all miners.
-// Also needs to read a config file with a DMO fullnode IP address, port, username and password as well as a list of wallet names to monitor for additional display information
-// It needs to handle state somehow.... maybe simply writing to a file?
-// But I still need a "loop" that runs and updates the screen every X seconds
-// Right now this is basically a simple stateless webserver, this will be the rpc server core to receive stats from running miners
-
-// To "access" this hit localhost:11235
-// Right now it doesn't do anything... but this is close to all I really need!
-
-
 import (
     "fmt"
     "log"
