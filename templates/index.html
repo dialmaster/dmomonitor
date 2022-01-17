@@ -1,6 +1,6 @@
     <html>
       <head>
-        <meta http-equiv="refresh" content="15" />
+        <!--<meta http-equiv="refresh" content="15" />-->
         <meta name="mobile-web-app-capable" content="yes">
         <title>DMO Mining Monitor</title>
         <style>
@@ -42,8 +42,8 @@
           }
 
 
-          .warn {
-            background-color: #AA3333
+          .styled-table tbody tr.warn {
+            background-color: #AA3333 !important
           }
           .styled-table thead tr {
             background-color: #009879;
@@ -80,28 +80,128 @@
           <thead>
             <tr>
               <th>Miner</th>
-              <th>Hashrate</th>
+              <th>Hash</th>
+              <th>S</th>
+              <th>A</th>
+              <th>R</th>
             </tr>
           </thead>
           <tbody>
             {{range $name, $stats := .MinerList}}
             <tr {{if $stats.Late}}class="warn"{{end}}>
-              <td>{{$name}}</td> 
+              <td>{{$name}} {{if $stats.Late}} - OFFLINE{{end}}</td> 
               <td>{{$stats.HashrateStr}}</td>
+              <td>{{$stats.Submit}}</td>
+              <td>{{$stats.Accept}}</td>
+              <td>{{$stats.Reject}}</td>
             </tr>
             {{end}}
             <tr>
-              <td>Total Hashrate</td>
-              <td>{{.Totalhash}}</td>
+              <td colspan="2">Total Hashrate</td>
+              <td colspan="3">{{.Totalhash}}</td>
             </tr>
           </tbody>
           </table>
 
         </div>
-        <div class="wallet-balance">Current Mining Wallet Balance: {{.Walletbalance}} DMO</div>
-        <div class="wallet-info">
-          {{.Walletstats}}
+
+
+        <div class="wallet-overall-stats-container">
+          <table class="styled-table">
+          <thead>
+            <tr>
+              <th colspan="2">Mining Wallets Overall Info (Last 4 Days)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Current DMO Balance</td>
+              <td>{{.Walletbalance}}</td>
+            </tr>
+            <tr>
+              <td>Daily Average DMO</td>
+              <td>{{printf "%.2f" .WalletOverallStats.DailyAverage}}</td>
+            </tr>
+            <tr>
+              <td>Hourly Average DMO</td>
+              <td>{{printf "%.2f" .WalletOverallStats.HourlyAverage}}</td>
+            </tr>
+            <tr>
+              <td>Rough Block Win Percent</td>
+              <td>{{printf "%.2f" .WalletOverallStats.WinPercent}}</td>
+            </tr>
+            <tr><td></td><td></td></tr>
+
+          </tbody>
+          </table>
+
         </div>
+
+        
+        <div class="wallet-daily-stats-container">
+          <table class="styled-table">
+          <thead>
+            <tr>
+              <th colspan="4">Mining Wallets Daily Stats</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td><b>Day</b></td>
+              <td><b>Coins</b></td>
+              <td><b>Coins/Hour</b></td>
+              <td><b>Win Percent</b></td>
+            </tr>
+            
+            {{range $idx, $stats := .WalletDailyStats}}
+            <tr>
+              <td>{{$stats.Day}}</td>
+              <td>{{printf "%.2f" $stats.CoinCount}}</td>
+              <td>{{printf "%.2f" $stats.CoinsPerHour}}</td>
+              <td>{{printf "%.2f" $stats.WinPercent}}</td>
+            </tr>
+            {{end}}
+            <tr><td colspan="4"></td></tr>
+
+          </tbody>
+          </table>
+
+        </div>
+
+
+        <div class="wallet-hourly-stats-container">
+          <table class="styled-table">
+          <thead>
+            <tr>
+              <th colspan="3">Mining Wallets Todays Hourly Stats</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td><b>Hour</b></td>
+              <td><b>Coins</b></td>
+              <td><b>Coins/Minute</b></td>
+            </tr>
+            
+            {{range $idx, $stats := .WalletHourlyStats}}
+            <tr>
+              <td>{{$stats.Hour}}</td>
+              <td>{{printf "%.2f" $stats.CoinCount}}</td>
+              <td>{{printf "%.2f" $stats.CoinsPerMinute}}</td>
+            </tr>
+            {{end}}
+            <tr><td colspan="3"></td></tr>
+
+          </tbody>
+          </table>
+
+        </div>
+
+
+
+
         </center>
       </body>
     </html>

@@ -39,6 +39,30 @@ type StatData struct {
 	coins      float64
 }
 
+type OverallInfoTX struct {
+	DailyAverage float64
+	HourlyAverage float64
+	WinPercent float64
+}
+var overallInfoTX OverallInfoTX
+
+
+type DayStatTX struct {
+	Day string
+	CoinCount float64
+	CoinsPerHour float64
+	WinPercent float64
+}
+var dayStatsTX []DayStatTX
+
+type HourStatTX struct {
+	Hour int
+	CoinCount float64
+	CoinsPerMinute float64
+}
+var hourStatsTX []HourStatTX
+
+
 func (s *StatData) record(tx *Transaction) {
 	if s.firstBlock == 0 || tx.Blockheight < s.firstBlock {
 		s.firstBlock = tx.Blockheight
@@ -155,32 +179,60 @@ func txStats() string {
 	}
 
 	var total = reportStats.coins
-
+	mutex.Lock();
+	overallInfoTX.DailyAverage = total/float64(reportDays)
+	overallInfoTX.HourlyAverage = total/float64(reportDays)/24.0
+	overallInfoTX.WinPercent = reportStats.roughPercent()
+	mutex.Unlock();
 	outString += fmt.Sprintf("\tDaily average: %0.2f\n", total/float64(reportDays))
 	outString += fmt.Sprintf("\tHourly average: %0.2f\n", total/float64(reportDays)/24.0)
 	outString += fmt.Sprintf("\tRough Block Win Percent: %0.4f%%\n", reportStats.roughPercent())
 
+	mutex.Lock();
+	dayStatsTX = dayStatsTX[:0]
+	mutex.Unlock();
 	for i := 0; i < reportDays; i++ {
+		var dayStat DayStatTX
 		var projection = ""
 		var coins = dailyStats[i].coins
 		var hours = 24.0
 		var when = beginReport.Add(time.Hour * 24 * time.Duration(i)).Format("2006-01-02")
+		dayStat.Day = when
+		dayStat.CoinCount = coins
+		dayStat.WinPercent = dailyStats[i].roughPercent()
 		if i == reportDays-1 {
+			dayStat.Day = "Today"
 			hours = float64(now.Hour()) + float64(now.Minute())/60.0
 			projection = fmt.Sprintf(" (~ %0.2f expected)", coins/hours*24)
 		}
+		dayStat.CoinsPerHour = coins / hours
+		mutex.Lock();
+		dayStatsTX = append(dayStatsTX, dayStat)
+		mutex.Unlock();
 		outString += fmt.Sprintf("\t%s:\t\t\t%8.2f\t\t%0.2f/h\t\tWin%%: %0.4f%%%s\n", when, coins, coins/hours, dailyStats[i].roughPercent(), projection)
 	}
 
+	mutex.Lock();
+	hourStatsTX = hourStatsTX[:0]
+	mutex.Unlock();
 	for i := 0; i <= now.Hour(); i++ {
+		var hourStat HourStatTX
 		var projection = ""
 		var coins = hourlyStats[i].coins
 		var minutes = 60.0
 		var when = fmt.Sprintf("%s hour %02d", getDay(now).Format("2006-01-02"), i)
+		hourStat.Hour = i
+		hourStat.CoinCount = coins
+
 		if i == now.Hour() {
 			minutes = float64(now.Minute()) + float64(now.Second())/60
 			projection = fmt.Sprintf("(~ %0.2f expected)", coins/minutes*60)
 		}
+		hourStat.CoinsPerMinute = coins/minutes
+		mutex.Lock();
+		hourStatsTX = append(hourStatsTX, hourStat)
+		mutex.Unlock();
+
 		outString += fmt.Sprintf("\t    %s:\t\t%8.2f\t\t%0.2f/m\t%s\n", when, coins, coins/minutes, projection)
 	}
 	return outString

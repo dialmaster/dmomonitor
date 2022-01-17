@@ -46,8 +46,10 @@ type PageVars struct {
     MinerList map[string]mineRpc
     Totalhash string
     Totalminers string
-    Walletstats string
     Walletbalance string
+    WalletOverallStats OverallInfoTX
+    WalletDailyStats []DayStatTX
+    WalletHourlyStats []HourStatTX
 }
 
 var minerList = make(map[string]mineRpc)
@@ -64,31 +66,40 @@ type WalletResp struct {
     ID string `json:"id"`
 }
 
-func getWalletBalance(walletName string) string {
-    client := &http.Client{}
-    URL := "http://"+c.NodeIP+":"+ c.NodePort + "/wallet/" + walletName
+func getWalletsBalance(walletNames string) string {
+    walletBalanceTotal := 0.0000
+
+    var wallets = strings.Split(walletNames, ",")
+
+    for _, w := range wallets {
+        var thisWallet = strings.TrimSpace(w)
+
+        client := &http.Client{}
+        URL := "http://"+c.NodeIP+":"+ c.NodePort + "/wallet/" + thisWallet
     
-    var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","method":"getbalance"}`)
+        var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","method":"getbalance"}`)
 
-    req, err := http.NewRequest("POST", URL, data)
-    req.SetBasicAuth(c.NodeUser, c.NodePass)
-    resp, err := client.Do(req)
-    if err != nil {
-        log.Fatal(err)
-        return "ERR"
-    }
-    bodyText, err := io.ReadAll(resp.Body)
-    s := string(bodyText)
-    fmt.Printf("RESPONSE BODY: %s", s)
+        req, err := http.NewRequest("POST", URL, data)
+        req.SetBasicAuth(c.NodeUser, c.NodePass)
+        resp, err := client.Do(req)
+        if err != nil {
+            log.Fatal(err)
+            return "ERR"
+        }
+        bodyText, err := io.ReadAll(resp.Body)
+        s := string(bodyText)
+        fmt.Printf("RESPONSE BODY: %s", s)
     
-    var myWalletBalance WalletResp
+        var myWalletBalance WalletResp
 
-    if err := json.Unmarshal(bodyText, &myWalletBalance); err != nil {
-        return "ERR"
+        if err := json.Unmarshal(bodyText, &myWalletBalance); err != nil {
+            return "ERR"
+        }
+        
+        walletBalanceTotal += myWalletBalance.Balance
     }
 
-    s = strconv.FormatFloat(myWalletBalance.Balance,'f', -1, 64)
-    return s
+    return strconv.FormatFloat(walletBalanceTotal,'f', -1, 64)
 }
 
 
@@ -101,8 +112,10 @@ func homePage(w http.ResponseWriter, r *http.Request){
 
     pageVars.MinerList = minerList
     pageVars.Totalhash = totalHashG
-    pageVars.Walletstats = walletStats
     pageVars.Walletbalance = walletBalance
+    pageVars.WalletOverallStats = overallInfoTX
+    pageVars.WalletDailyStats = dayStatsTX
+    pageVars.WalletHourlyStats = hourStatsTX
 
     upTime := time.Now().Sub(progStartTime)
     upTime -= upTime % time.Second
@@ -172,7 +185,7 @@ func formatHashNum(hashrate int) string {
 func consoleOutput() {
 
     walletStats = txStats()
-    walletBalance = getWalletBalance(c.WalletsToMonitor)
+    walletBalance = getWalletsBalance(c.WalletsToMonitor)
 
     fmt.Print("\033[H\033[2J") // Clear screen
     setColor(colorWhite)
@@ -202,19 +215,19 @@ func consoleOutput() {
             stats := minerList[name]
             howLong := time.Now().Sub(stats.LastReport)
             howLong -= howLong % time.Second
-            if (howLong.Seconds() > 120) {
-                mutex.Lock()
-                delete(minerList, name)
-                mutex.Unlock()
-            } else if (howLong.Seconds() > 12) {
+            if (howLong.Seconds() > 12) {
                 setColor(colorRed)
                 stats.Late = true
+                mutex.Lock()
+                    minerList[name] = stats
+                mutex.Unlock()
                 warnings += "\n\tWARN: " + name + " has not reported in " + howLong.String() + "\n"
             } else {
                 stats.Late = false
+                totalHash += stats.Hashrate
                 setColor(colorGreen)
             }
-            totalHash += stats.Hashrate
+            
             fmt.Printf("\t%s%s%s%s%s%s\n", 
                 StringSpaced(name," ",24), 
                 StringSpaced(stats.LastReport.Format("2006-01-02 15:04:05")," ", 35), 
@@ -237,12 +250,13 @@ func consoleOutput() {
     if (len(warnings) > 0) {
         setColor(colorRed)
         fmt.Printf(warnings)
+        setColor(colorGreen)
     }
-    fmt.Printf("\n\tWallet Balance: %s\n", walletBalance);
+    fmt.Printf("\n\tWallets Combined Balance (%s): %s\n", c.WalletsToMonitor, walletBalance);
 
     fmt.Printf("\n\n\n")
     setColor(colorYellow)
-    fmt.Printf("\t\t\t\tWallet Statistics\n")
+    fmt.Printf("\t\t\t\tWallet Mining Stats for Wallets: %s\n", c.WalletsToMonitor)
     setColor(colorGreen)
 
     fmt.Println(walletStats)
