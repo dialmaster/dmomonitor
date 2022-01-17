@@ -22,5 +22,9 @@ You can also access this view from other computers or phones by using the IP add
 
 
 To build the executable:
-Simply run "go build"
+Go Version used for build: 1.17.5
+
+go get gopkg.in/yaml.v2
+go build
+
 
