@@ -75,8 +75,6 @@ func getWalletsBalance(walletNames string) string {
             return "ERR"
         }
         bodyText, err := io.ReadAll(resp.Body)
-        s := string(bodyText)
-        fmt.Printf("RESPONSE BODY: %s", s)
     
         var myWalletBalance WalletResp
 
@@ -149,7 +147,7 @@ func getMinerStatsRPC(rw http.ResponseWriter, req *http.Request) {
 func handleRequests() {
     http.HandleFunc("/", homePage)
     http.HandleFunc("/minerstats", getMinerStatsRPC)
-    log.Fatal(http.ListenAndServe(":11235", nil))
+    log.Fatal(http.ListenAndServe(":" + c.ServerPort, nil))
 }
 
 func StringSpaced(text string, spacingchar string, numspaces int) string {
@@ -172,8 +170,10 @@ func formatHashNum(hashrate int) string {
 
 func consoleOutput() {
 
-    walletStats = txStats()
-    walletBalance = getWalletsBalance(c.WalletsToMonitor)
+    if (len(c.WalletsToMonitor) > 0) {
+        walletStats = txStats()
+        walletBalance = getWalletsBalance(c.WalletsToMonitor)
+    }
 
     fmt.Print("\033[H\033[2J") // Clear screen
     setColor(colorWhite)
