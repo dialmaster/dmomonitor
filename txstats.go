@@ -42,6 +42,7 @@ type OverallInfoTX struct {
 	DailyAverage  float64
 	HourlyAverage float64
 	WinPercent    float64
+	Projection    string
 }
 
 var overallInfoTX OverallInfoTX
@@ -203,6 +204,7 @@ func txStats() string {
 			dayStat.Day = "Today"
 			hours = float64(now.Hour()) + float64(now.Minute())/60.0
 			projection = fmt.Sprintf(" (~ %0.2f expected)", coins/hours*24)
+			overallInfoTX.Projection = fmt.Sprintf("%0.2f", coins/hours*24)
 		}
 		dayStat.CoinsPerHour = coins / hours
 		mutex.Lock()
