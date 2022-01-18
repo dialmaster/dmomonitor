@@ -79,7 +79,7 @@ func getWalletsBalance(walletNames string) string {
 		walletBalanceTotal += myWalletBalance.Balance
 	}
 
-	return strconv.FormatFloat(walletBalanceTotal, 'f', -1, 64)
+	return fmt.Sprintf("%.3f", walletBalanceTotal)
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
@@ -105,8 +105,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	pVars.WalletDailyStats = dayStatsTX
 	pVars.WalletHourlyStats = hourStatsTX
 
-	upTime := time.Now().Sub(progStartTime)
-	upTime -= upTime % time.Second
+	upTime := time.Now().Sub(progStartTime).Round(time.Second)
 	pVars.Uptime = upTime.String()
 
 	tmpl, err := template.ParseFiles(fp)
@@ -173,7 +172,7 @@ func formatHashNum(hashrate int) string {
 
 func consoleOutput() {
 
-	if len(c.WalletsToMonitor) > 0 {
+	if len(c.WalletsToMonitor) > 0 && c.NodeIP != "XXX.XXX.XXX.XXX" {
 		walletStats = txStats()
 		walletBalance = getWalletsBalance(c.WalletsToMonitor)
 	}
@@ -243,13 +242,15 @@ func consoleOutput() {
 		fmt.Printf(warnings)
 		setColor(colorGreen)
 	}
-	fmt.Printf("\n\tWallets Combined Balance (%s): %s\n", c.WalletsToMonitor, walletBalance)
 
-	fmt.Printf("\n\n\n")
-	setColor(colorYellow)
-	fmt.Printf("\t\t\t\tWallet Mining Stats for Wallets: %s\n", c.WalletsToMonitor)
-	setColor(colorGreen)
+	if c.WalletsToMonitor != "MyExampleWalletName1,MyExampleWalletName2" {
+		fmt.Printf("\n\tWallets Combined Balance (%s): %s\n", c.WalletsToMonitor, walletBalance)
 
-	fmt.Println(walletStats)
+		fmt.Printf("\n\n\n")
+		setColor(colorYellow)
+		fmt.Printf("\t\t\t\tWallet Mining Stats for Wallets: %s\n", c.WalletsToMonitor)
+		setColor(colorGreen)
 
+		fmt.Println(walletStats)
+	}
 }

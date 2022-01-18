@@ -1,8 +1,19 @@
-NodeIP: 192.168.1.1
-NodePort: 6433
-NodeUser: username
-NodePass: password
-WalletsToMonitor: SomeWallet
+  # The port THIS dmo-monitor will use on this computer. This is the only required param
 ServerPort: 11235
-SMSNumber: 5558675309
-SMSWarnTimeSeconds: 500
+
+  #### Wallet Stats Config Options
+  # These options are for displaying wallet mining stats and are only currently valid for solo mining
+  # If you are not solo mining, or don't care about this, you can leave this section unchanged
+
+  # Your full node ip, this is where your miners are also mining to
+NodeIP: XXX.XXX.XXX.XXX
+  # Your full node port, the same as used by your miners
+NodePort: 6434
+  # Your full node username and password
+NodeUser: someusername
+NodePass: somepassword
+  # These should be wallet NAMES, not receiving addresses, comma separated. 
+  # The wallets named here should be wallets that are available on this fullnode
+  # You must populate this with at least one wallet name if you want to use the Wallet Stats
+WalletsToMonitor: MyExampleWalletName1,MyExampleWalletName2
+  #### End Wallet Stats Config Options
