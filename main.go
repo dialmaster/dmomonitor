@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"path"
 	"sort"
 	"strconv"
@@ -15,6 +16,110 @@ import (
 	"sync"
 	"time"
 )
+
+var c conf
+var minerList = make(map[string]mineRpc)
+var progStartTime = time.Now()
+var mutex = &sync.Mutex{}
+
+var totalHashG = ""
+var walletStats = ""
+var walletBalance = ""
+
+func main() {
+
+	c.getConf()
+
+	go func() {
+		for {
+			consoleOutput()
+			time.Sleep(6 * time.Second)
+		}
+	}()
+	handleRequests()
+}
+
+func getWalletsBalance(walletNames string) string {
+	walletBalanceTotal := 0.0000
+
+	type walletResp struct {
+		Balance float64 `json:"result"`
+		ID      string  `json:"id"`
+	}
+
+	var wallets = strings.Split(walletNames, ",")
+
+	for _, w := range wallets {
+		var thisWallet = strings.TrimSpace(w)
+
+		client := &http.Client{}
+		reqUrl := url.URL{
+			Scheme: "http",
+			Host:   c.NodeIP + ":" + c.NodePort,
+			Path:   "wallet/" + thisWallet,
+		}
+
+		var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","method":"getbalance"}`)
+
+		req, err := http.NewRequest("POST", reqUrl.String(), data)
+		req.SetBasicAuth(c.NodeUser, c.NodePass)
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Fatal(err)
+			return "Unable to make request to wallet: " + err.Error()
+		}
+		bodyText, err := io.ReadAll(resp.Body)
+
+		var myWalletBalance walletResp
+
+		if err := json.Unmarshal(bodyText, &myWalletBalance); err != nil {
+			return "Unable to decode json from wallet request: " + err.Error()
+		}
+
+		walletBalanceTotal += myWalletBalance.Balance
+	}
+
+	return strconv.FormatFloat(walletBalanceTotal, 'f', -1, 64)
+}
+
+func homePage(w http.ResponseWriter, r *http.Request) {
+	fp := path.Join("templates", "index.html")
+
+	type pageVars struct {
+		Uptime             string
+		MinerList          map[string]mineRpc
+		Totalhash          string
+		Totalminers        string
+		Walletbalance      string
+		WalletOverallStats OverallInfoTX
+		WalletDailyStats   []DayStatTX
+		WalletHourlyStats  []HourStatTX
+	}
+
+	var pVars pageVars
+
+	pVars.MinerList = minerList
+	pVars.Totalhash = totalHashG
+	pVars.Walletbalance = walletBalance
+	pVars.WalletOverallStats = overallInfoTX
+	pVars.WalletDailyStats = dayStatsTX
+	pVars.WalletHourlyStats = hourStatsTX
+
+	upTime := time.Now().Sub(progStartTime)
+	upTime -= upTime % time.Second
+	pVars.Uptime = upTime.String()
+
+	tmpl, err := template.ParseFiles(fp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, pVars); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+}
 
 type mineRpc struct {
 	Name        string
@@ -27,104 +132,6 @@ type mineRpc struct {
 	Late        bool
 }
 
-type PageVars struct {
-	Uptime             string
-	MinerList          map[string]mineRpc
-	Totalhash          string
-	Totalminers        string
-	Walletbalance      string
-	WalletOverallStats OverallInfoTX
-	WalletDailyStats   []DayStatTX
-	WalletHourlyStats  []HourStatTX
-}
-
-var minerList = make(map[string]mineRpc)
-var progStartTime = time.Now()
-var mutex = &sync.Mutex{}
-
-var totalHashG = ""
-var walletStats = ""
-var walletBalance = ""
-
-type WalletResp struct {
-	Balance float64 `json:"result"`
-	ID      string  `json:"id"`
-}
-
-func getWalletsBalance(walletNames string) string {
-	walletBalanceTotal := 0.0000
-
-	var wallets = strings.Split(walletNames, ",")
-
-	for _, w := range wallets {
-		var thisWallet = strings.TrimSpace(w)
-
-		client := &http.Client{}
-		URL := "http://" + c.NodeIP + ":" + c.NodePort + "/wallet/" + thisWallet
-
-		var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","method":"getbalance"}`)
-
-		req, err := http.NewRequest("POST", URL, data)
-		req.SetBasicAuth(c.NodeUser, c.NodePass)
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Fatal(err)
-			return "ERR"
-		}
-		bodyText, err := io.ReadAll(resp.Body)
-
-		var myWalletBalance WalletResp
-
-		if err := json.Unmarshal(bodyText, &myWalletBalance); err != nil {
-			return "ERR"
-		}
-
-		walletBalanceTotal += myWalletBalance.Balance
-	}
-
-	return strconv.FormatFloat(walletBalanceTotal, 'f', -1, 64)
-}
-
-// We can serve up the current stats as HTML here to, so there will be console output AND a webpage :)
-func homePage(w http.ResponseWriter, r *http.Request) {
-
-	fp := path.Join("templates", "index.html")
-
-	var pageVars PageVars
-
-	pageVars.MinerList = minerList
-	pageVars.Totalhash = totalHashG
-	pageVars.Walletbalance = walletBalance
-	pageVars.WalletOverallStats = overallInfoTX
-	pageVars.WalletDailyStats = dayStatsTX
-	pageVars.WalletHourlyStats = hourStatsTX
-
-	upTime := time.Now().Sub(progStartTime)
-	upTime -= upTime % time.Second
-	pageVars.Uptime = upTime.String()
-
-	tmpl, err := template.ParseFiles(fp)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err := tmpl.Execute(w, pageVars); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-}
-
-// Accepts json post like:
-/*
-{
-    "Name": "DIALMAN",
-    "Hashrate": 12323,
-    "Submit": 1,
-    "Reject": 1,
-    "Accept": 1
-}
-*/
 func getMinerStatsRPC(rw http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	var thisStat mineRpc
@@ -245,18 +252,4 @@ func consoleOutput() {
 
 	fmt.Println(walletStats)
 
-}
-
-func main() {
-
-	c.getConf()
-
-	// Main loop that updates console display
-	go func() {
-		for {
-			consoleOutput()
-			time.Sleep(6 * time.Second)
-		}
-	}()
-	handleRequests()
 }

@@ -17,8 +17,18 @@
               font-size: 2vw;
               white-space: pre;
           }
+          
+          @media screen and (min-device-width: 600px) {
+            .hidden-pc {
+              display: none;
+            }
+          }
 
           @media screen and (max-device-width: 600px) {
+            .hidden-mobile {
+              display: none;
+            }
+
             .body {
               width: 100%;
             }
@@ -84,9 +94,9 @@
             <tr>
               <th>Miner</th>
               <th>Hash</th>
-              <th>S</th>
-              <th>A</th>
-              <th>R</th>
+              <th><span class="hidden-mobile">Submitted</span><span class="hidden-pc">S</span></th>
+              <th><span class="hidden-mobile">Accepted</span><span class="hidden-pc">A</span></th>
+              <th><span class="hidden-mobile">Rejected</span><span class="hidden-pc">R</span></th>
             </tr>
           </thead>
           <tbody>
@@ -170,7 +180,7 @@
 
           </tbody>
           </table>
-          <span class="note">Note: Win Percentages are the percentage of ALL coins mined on the network you got.</span>
+          <span class="note">Note: Win percentages are your percentage of all coins mined on the network.</span>
         </div>
 
 

@@ -15,8 +15,6 @@ type conf struct {
 	ServerPort       string `yaml:"ServerPort"`
 }
 
-var c conf
-
 func (c *conf) getConf() *conf {
 
 	yamlFile, err := ioutil.ReadFile("config.yaml")
