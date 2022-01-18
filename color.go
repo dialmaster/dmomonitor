@@ -1,8 +1,7 @@
 package main
 
-
 import (
-    "fmt"
+	"fmt"
 )
 
 var colorRed = "\033[31m"
@@ -14,6 +13,5 @@ var colorCyan = "\033[36m"
 var colorWhite = "\033[37m"
 
 func setColor(color string) {
-        fmt.Printf(color)
+	fmt.Printf(color)
 }
-

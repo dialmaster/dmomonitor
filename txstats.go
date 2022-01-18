@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"bytes"
 	"encoding/json"
@@ -9,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-//	"strconv"
+	//	"strconv"
 	"strings"
 	"time"
 )
@@ -40,28 +39,29 @@ type StatData struct {
 }
 
 type OverallInfoTX struct {
-	DailyAverage float64
+	DailyAverage  float64
 	HourlyAverage float64
-	WinPercent float64
+	WinPercent    float64
 }
+
 var overallInfoTX OverallInfoTX
 
-
 type DayStatTX struct {
-	Day string
-	CoinCount float64
+	Day          string
+	CoinCount    float64
 	CoinsPerHour float64
-	WinPercent float64
+	WinPercent   float64
 }
+
 var dayStatsTX []DayStatTX
 
 type HourStatTX struct {
-	Hour int
-	CoinCount float64
+	Hour           int
+	CoinCount      float64
 	CoinsPerMinute float64
 }
-var hourStatsTX []HourStatTX
 
+var hourStatsTX []HourStatTX
 
 func (s *StatData) record(tx *Transaction) {
 	if s.firstBlock == 0 || tx.Blockheight < s.firstBlock {
@@ -88,25 +88,24 @@ func getDay(t time.Time) time.Time {
 func fetchTX(u *url.URL) []*Transaction {
 	var resp struct {
 		Results []*Transaction `json:"result"`
-    }
+	}
 
-    var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","method":"listtransactions","params":["*", 10000, 0]}`)
-    var err = doPost(u, data, &resp)
-    if err != nil {
+	var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","method":"listtransactions","params":["*", 10000, 0]}`)
+	var err = doPost(u, data, &resp)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to POST to URL %q: %s", u.String(), err)
 		os.Exit(2)
-    }
+	}
 
-    return resp.Results
+	return resp.Results
 }
 
 func doPost(u *url.URL, data io.Reader, resp interface{}) error {
 	req, err := http.NewRequest("POST", u.String(), data)
 	req.SetBasicAuth(c.NodeUser, c.NodePass)
 
-
 	req.Header.Set("Accept", "text/plain")
-    req.Header.Set("Content-Type", "text/plain")
+	req.Header.Set("Content-Type", "text/plain")
 
 	cli := &http.Client{}
 	r, err := cli.Do(req)
@@ -132,12 +131,12 @@ func doPost(u *url.URL, data io.Reader, resp interface{}) error {
 
 func txStats() string {
 	var outString = ""
-	var urlString  = "http://" + c.NodeIP + ":" + c.NodePort
+	var urlString = "http://" + c.NodeIP + ":" + c.NodePort
 	var reportDays = 4
 	var wallets = strings.Split(c.WalletsToMonitor, ",")
 
 	var u, err = url.Parse(urlString)
-	if (err != nil) {
+	if err != nil {
 		fmt.Printf("ERR")
 	}
 	var txList []*Transaction
@@ -179,18 +178,18 @@ func txStats() string {
 	}
 
 	var total = reportStats.coins
-	mutex.Lock();
-	overallInfoTX.DailyAverage = total/float64(reportDays)
-	overallInfoTX.HourlyAverage = total/float64(reportDays)/24.0
+	mutex.Lock()
+	overallInfoTX.DailyAverage = total / float64(reportDays)
+	overallInfoTX.HourlyAverage = total / float64(reportDays) / 24.0
 	overallInfoTX.WinPercent = reportStats.roughPercent()
-	mutex.Unlock();
+	mutex.Unlock()
 	outString += fmt.Sprintf("\tDaily average: %0.2f\n", total/float64(reportDays))
 	outString += fmt.Sprintf("\tHourly average: %0.2f\n", total/float64(reportDays)/24.0)
 	outString += fmt.Sprintf("\tRough Block Win Percent: %0.4f%%\n", reportStats.roughPercent())
 
-	mutex.Lock();
+	mutex.Lock()
 	dayStatsTX = dayStatsTX[:0]
-	mutex.Unlock();
+	mutex.Unlock()
 	for i := 0; i < reportDays; i++ {
 		var dayStat DayStatTX
 		var projection = ""
@@ -206,15 +205,15 @@ func txStats() string {
 			projection = fmt.Sprintf(" (~ %0.2f expected)", coins/hours*24)
 		}
 		dayStat.CoinsPerHour = coins / hours
-		mutex.Lock();
+		mutex.Lock()
 		dayStatsTX = append(dayStatsTX, dayStat)
-		mutex.Unlock();
+		mutex.Unlock()
 		outString += fmt.Sprintf("\t%s:\t\t\t%8.2f\t\t%0.2f/h\t\tWin%%: %0.4f%%%s\n", when, coins, coins/hours, dailyStats[i].roughPercent(), projection)
 	}
 
-	mutex.Lock();
+	mutex.Lock()
 	hourStatsTX = hourStatsTX[:0]
-	mutex.Unlock();
+	mutex.Unlock()
 	for i := 0; i <= now.Hour(); i++ {
 		var hourStat HourStatTX
 		var projection = ""
@@ -228,10 +227,10 @@ func txStats() string {
 			minutes = float64(now.Minute()) + float64(now.Second())/60
 			projection = fmt.Sprintf("(~ %0.2f expected)", coins/minutes*60)
 		}
-		hourStat.CoinsPerMinute = coins/minutes
-		mutex.Lock();
+		hourStat.CoinsPerMinute = coins / minutes
+		mutex.Lock()
 		hourStatsTX = append(hourStatsTX, hourStat)
-		mutex.Unlock();
+		mutex.Unlock()
 
 		outString += fmt.Sprintf("\t    %s:\t\t%8.2f\t\t%0.2f/m\t%s\n", when, coins, coins/minutes, projection)
 	}
