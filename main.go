@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -16,6 +17,12 @@ import (
 	"sync"
 	"time"
 )
+
+//go:embed templates/**
+var tmplFS embed.FS
+
+//go:embed js/**
+var jsFS embed.FS
 
 var c conf
 var minerList = make(map[string]mineRpc)
@@ -142,7 +149,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	upTime := time.Now().Sub(progStartTime).Round(time.Second)
 	pVars.Uptime = upTime.String()
 
-	tmpl, err := template.ParseFiles(fp)
+	tmpl, err := template.ParseFS(tmplFS, fp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -189,7 +196,7 @@ func handleRequests() {
 	http.HandleFunc("/minerstats", getMinerStatsRPC)
 	http.HandleFunc("/removeminer", removeLateMiner)
 	http.Handle("/js/",
-		http.StripPrefix("/js/", http.FileServer(http.Dir("js"))))
+		http.StripPrefix("/js/", http.FileServer(http.FS(jsFS))))
 
 	log.Fatal(http.ListenAndServe(":"+c.ServerPort, nil))
 }
