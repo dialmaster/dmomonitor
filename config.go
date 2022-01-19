@@ -16,6 +16,7 @@ type conf struct {
 	TelegramUserId     string  `yaml:"TelegramUserId"`
 	MinerLateTime      float64 `yaml:"MinerLateTime"`
 	AutoRefreshSeconds int     `yaml:"AutoRefreshSeconds"`
+	DailyStatDays      int     `yaml:"DailyStatDays"`
 }
 
 func (c *conf) getConf() *conf {

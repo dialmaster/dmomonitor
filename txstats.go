@@ -133,7 +133,7 @@ func doPost(u *url.URL, data io.Reader, resp interface{}) error {
 func txStats() string {
 	var outString = ""
 	var urlString = "http://" + c.NodeIP + ":" + c.NodePort
-	var reportDays = 4
+	var reportDays = c.DailyStatDays
 	var wallets = strings.Split(c.WalletsToMonitor, ",")
 
 	var u, err = url.Parse(urlString)

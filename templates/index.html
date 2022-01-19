@@ -144,15 +144,15 @@
               <td>{{.Walletbalance}}</td>
             </tr>
             <tr>
-              <td>Daily Average DMO (Last 4 days)</td>
+              <td>Daily Average DMO (Last {{.DailyStatDays}} days)</td>
               <td>{{printf "%.2f" .WalletOverallStats.DailyAverage}}</td>
             </tr>
             <tr>
-              <td>Hourly Average DMO (Last 4 days)</td>
+              <td>Hourly Average DMO (Last {{.DailyStatDays}} days)</td>
               <td>{{printf "%.2f" .WalletOverallStats.HourlyAverage}}</td>
             </tr>
             <tr>
-              <td>Rough Block Win Percent (Last 4 days)</td>
+              <td>Rough Block Win Percent (Last {{.DailyStatDays}} days)</td>
               <td>{{printf "%.2f" .WalletOverallStats.WinPercent}}</td>
             </tr>
             <tr>
@@ -171,7 +171,7 @@
           <table class="styled-table">
           <thead>
             <tr>
-              <th colspan="4">Mining Wallets - Last 4 Days Stats</th>
+              <th colspan="4">Mining Wallets - Last {{.DailyStatDays}} Days Stats</th>
             </tr>
           </thead>
           <tbody>

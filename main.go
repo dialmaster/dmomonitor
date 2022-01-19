@@ -31,6 +31,13 @@ func main() {
 	if c.MinerLateTime < 15 {
 		c.MinerLateTime = 15
 	}
+	if c.DailyStatDays < 1 {
+		c.DailyStatDays = 4
+	}
+	// Don't let people get too nuts here
+	if c.DailyStatDays > 21 {
+		c.DailyStatDays = 21
+	}
 
 	go func() {
 		for {
@@ -118,6 +125,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		WalletDailyStats   []DayStatTX
 		WalletHourlyStats  []HourStatTX
 		AutoRefresh        int
+		DailyStatDays      int
 	}
 
 	var pVars pageVars
@@ -129,6 +137,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	pVars.WalletDailyStats = dayStatsTX
 	pVars.WalletHourlyStats = hourStatsTX
 	pVars.AutoRefresh = c.AutoRefreshSeconds
+	pVars.DailyStatDays = c.DailyStatDays
 
 	upTime := time.Now().Sub(progStartTime).Round(time.Second)
 	pVars.Uptime = upTime.String()
