@@ -19,10 +19,6 @@ Hopefully the changes needed for the miner are integrated into the Foundation bu
 Windows: dmo-monitor.exe
 Linux: dmo-monitor
 
-The `js/` and `templates/` directories and their contents are required as well and should be placed in the same place
-relative to the executable as they are in this git repository.
-
-
 ## Setup
 
 In order to set this up, there are only a few things you need to do:
