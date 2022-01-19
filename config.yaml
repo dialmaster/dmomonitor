@@ -2,11 +2,16 @@
   # The port THIS dmo-monitor will use on this computer. 
 ServerPort: 11235
 
+  #### END REQUIRED PARAMS
+
+  # The number of seconds for the webui to wait before it auto-refreshes itself
+  # Default is 0 and means autorefresh is disabled.
+AutoRefreshSeconds: 5
+
+
   # The number of seconds a miner can not report in before it is considered late/offline.
   # Minimum is 15 seconds
 MinerLateTime: 15
-  #### END REQUIRED PARAMS
-
 
 
   # Used to send notifications when your miners go offline via telegram

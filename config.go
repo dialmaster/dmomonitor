@@ -7,14 +7,15 @@ import (
 )
 
 type conf struct {
-	NodeIP           string  `yaml:"NodeIP"`
-	NodePort         string  `yaml:"NodePort"`
-	NodeUser         string  `yaml:"NodeUser"`
-	NodePass         string  `yaml:"NodePass"`
-	WalletsToMonitor string  `yaml:"WalletsToMonitor"`
-	ServerPort       string  `yaml:"ServerPort"`
-	TelegramUserId   string  `yaml:"TelegramUserId"`
-	MinerLateTime    float64 `yaml:"MinerLateTime"`
+	NodeIP             string  `yaml:"NodeIP"`
+	NodePort           string  `yaml:"NodePort"`
+	NodeUser           string  `yaml:"NodeUser"`
+	NodePass           string  `yaml:"NodePass"`
+	WalletsToMonitor   string  `yaml:"WalletsToMonitor"`
+	ServerPort         string  `yaml:"ServerPort"`
+	TelegramUserId     string  `yaml:"TelegramUserId"`
+	MinerLateTime      float64 `yaml:"MinerLateTime"`
+	AutoRefreshSeconds int     `yaml:"AutoRefreshSeconds"`
 }
 
 func (c *conf) getConf() *conf {

@@ -28,9 +28,9 @@ var walletBalance = ""
 func main() {
 
 	c.getConf()
-    if (c.MinerLateTime < 15) {
-        c.MinerLateTime = 15
-    }
+	if c.MinerLateTime < 15 {
+		c.MinerLateTime = 15
+	}
 
 	go func() {
 		for {
@@ -117,6 +117,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		WalletOverallStats OverallInfoTX
 		WalletDailyStats   []DayStatTX
 		WalletHourlyStats  []HourStatTX
+		AutoRefresh        int
 	}
 
 	var pVars pageVars
@@ -127,6 +128,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	pVars.WalletOverallStats = overallInfoTX
 	pVars.WalletDailyStats = dayStatsTX
 	pVars.WalletHourlyStats = hourStatsTX
+	pVars.AutoRefresh = c.AutoRefreshSeconds
 
 	upTime := time.Now().Sub(progStartTime).Round(time.Second)
 	pVars.Uptime = upTime.String()

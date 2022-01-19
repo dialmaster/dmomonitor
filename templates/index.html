@@ -1,6 +1,6 @@
     <html>
       <head>
-        <meta http-equiv="refresh" content="15" />
+        {{if .AutoRefresh}} <meta http-equiv="refresh" content="{{.AutoRefresh}}" />{{end}}
         <script src="/js/app.js"></script>
         <meta name="mobile-web-app-capable" content="yes">
         <title>DMO Mining Monitor</title>
