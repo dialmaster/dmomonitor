@@ -4,6 +4,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+    "os"
 )
 
 type conf struct {
@@ -20,8 +21,12 @@ type conf struct {
 }
 
 func (c *conf) getConf() *conf {
+    myConfigFile := "config.yaml"
+    if _, err := os.Stat("myconfig.yaml"); err == nil {
+      myConfigFile = "myconfig.yaml"
+    }
 
-	yamlFile, err := ioutil.ReadFile("config.yaml")
+	yamlFile, err := ioutil.ReadFile(myConfigFile)
 	if err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
 	}

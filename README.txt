@@ -24,8 +24,9 @@ Setup:
 
 In order to set this up, there are only a few things you need to do:
 
- 1) Setup the config.yaml configuration file that comes with dmo-monitor. There are notes in the configuration file that 
- you can use as a guide for doing this.
+ 1) Copy config.yaml to myconfig.yaml
+ Edit/setup the myconfig.yaml configuration file with your specific config. There are notes in the configuration file 
+ that you can use as a guide for doing this.
 
  2) Make sure you are using a version of DynMiner2.exe that supports reporting. I have included a version built from the Foundation
  2.05 in this repo for Windows. You will need to ensure that you use the dyn_miner2.cl that is included with it as well.
