@@ -28,6 +28,9 @@ var walletBalance = ""
 func main() {
 
 	c.getConf()
+    if (c.MinerLateTime < 15) {
+        c.MinerLateTime = 15
+    }
 
 	go func() {
 		for {

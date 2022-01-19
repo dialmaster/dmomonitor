@@ -2,7 +2,8 @@
   # The port THIS dmo-monitor will use on this computer. 
 ServerPort: 11235
 
-  # The number of seconds a miner can not report in before it is considered late/offline. 
+  # The number of seconds a miner can not report in before it is considered late/offline.
+  # Minimum is 15 seconds
 MinerLateTime: 15
   #### END REQUIRED PARAMS
 
