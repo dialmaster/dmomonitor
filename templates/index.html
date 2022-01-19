@@ -1,6 +1,7 @@
     <html>
       <head>
-        <!--<meta http-equiv="refresh" content="15" />-->
+        <meta http-equiv="refresh" content="15" />
+        <script src="/js/app.js"></script>
         <meta name="mobile-web-app-capable" content="yes">
         <title>DMO Mining Monitor</title>
         <style>
@@ -17,7 +18,12 @@
               font-size: 2vw;
               white-space: pre;
           }
-          
+          .table-button {
+            background-color: #A33;
+            border: 1px solid black;
+            cursor: pointer;
+          }
+
           @media screen and (min-device-width: 600px) {
             .hidden-pc {
               display: none;
@@ -56,7 +62,7 @@
 
 
           .styled-table tbody tr.warn {
-            background-color: #AA3333 !important
+            background-color: #911 !important
           }
           .styled-table thead tr {
             background-color: #009879;
@@ -104,9 +110,14 @@
             <tr {{if $stats.Late}}class="warn"{{end}}>
               <td>{{$name}} {{if $stats.Late}} - OFFLINE{{end}}</td> 
               <td>{{$stats.HashrateStr}}</td>
+              
+              {{if $stats.Late}}
+              <td colspan="3" class="table-button" onclick="minerOnClick('{{$name}}')">REMOVE MINER</td>
+              {{else}}
               <td>{{$stats.Submit}}</td>
               <td>{{$stats.Accept}}</td>
               <td>{{$stats.Reject}}</td>
+              {{end}}
             </tr>
             {{end}}
             <tr>

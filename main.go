@@ -146,9 +146,17 @@ func getMinerStatsRPC(rw http.ResponseWriter, req *http.Request) {
 	mutex.Unlock()
 }
 
+func removeLateMiner(rw http.ResponseWriter, req *http.Request) {
+	delete(minerList, req.URL.Query().Get("minerName"))
+}
+
 func handleRequests() {
 	http.HandleFunc("/", homePage)
 	http.HandleFunc("/minerstats", getMinerStatsRPC)
+	http.HandleFunc("/removeminer", removeLateMiner)
+	http.Handle("/js/",
+		http.StripPrefix("/js/", http.FileServer(http.Dir("js"))))
+
 	log.Fatal(http.ListenAndServe(":"+c.ServerPort, nil))
 }
 
