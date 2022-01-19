@@ -21,7 +21,6 @@ var c conf
 var minerList = make(map[string]mineRpc)
 var progStartTime = time.Now()
 var mutex = &sync.Mutex{}
-
 var totalHashG = ""
 var walletStats = ""
 var walletBalance = ""
@@ -37,6 +36,27 @@ func main() {
 		}
 	}()
 	handleRequests()
+}
+
+func sendOfflineNotificationToTelegram(minerName string) {
+	params := url.Values{}
+	params.Add("chat_id", c.TelegramUserId)
+	params.Add("text", "Your miner '"+minerName+"' is offline")
+	body := strings.NewReader(params.Encode())
+
+	req, err := http.NewRequest("POST", "https://api.telegram.org/bot5084964646:AAEmnj-HIWsM1oBIHeCy03JsjBw_pG5I5Ik/sendMessage", body)
+
+	// For now leaving errors unhandled... if the telegram notification fails it's not really a huge deal
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 }
 
 func getWalletsBalance(walletNames string) string {
@@ -213,17 +233,23 @@ func consoleOutput() {
 			stats := minerList[name]
 			howLong := time.Now().Sub(stats.LastReport)
 			howLong -= howLong % time.Second
-			if howLong.Seconds() > 12 {
-				setColor(colorRed)
+			if howLong.Seconds() > c.MinerLateTime && stats.Late == false {
 				stats.Late = true
 				mutex.Lock()
 				minerList[name] = stats
 				mutex.Unlock()
-				warnings += "\n\tWARN: " + name + " has not reported in " + howLong.String() + "\n"
-			} else {
+				if len(c.TelegramUserId) > 0 {
+					sendOfflineNotificationToTelegram(name)
+				}
+			} else if howLong.Seconds() <= c.MinerLateTime {
 				stats.Late = false
 				totalHash += stats.Hashrate
 				setColor(colorGreen)
+			}
+
+			if stats.Late {
+				warnings += "\n\tWARN: " + name + " has not reported in " + howLong.String() + "\n"
+				setColor(colorRed)
 			}
 
 			fmt.Printf("\t%s%s%s%s%s%s\n",
