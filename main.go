@@ -239,7 +239,7 @@ func updateMinerStatusAndConsoleOutput() {
 
 	fmt.Print("\033[H\033[2J") // Clear screen
 	setColor(colorWhite)
-	fmt.Printf("\t\t\t\tDMO Mining Monitor\n\n")
+	fmt.Printf("\t\t\t\tDMO-Monitor %s\n\n", versionString)
 
 	setColor(colorYellow)
 	fmt.Printf("\t%s%s%s%s%s%s\n",
