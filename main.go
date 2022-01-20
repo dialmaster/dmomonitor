@@ -18,6 +18,8 @@ import (
 	"time"
 )
 
+var versionString = "v1.0"
+
 //go:embed templates/**
 var tmplFS embed.FS
 
@@ -138,10 +140,12 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		WalletHourlyStats  []HourStatTX
 		AutoRefresh        int
 		DailyStatDays      int
+		VersionString      string
 	}
 
 	var pVars pageVars
 
+	pVars.VersionString = versionString
 	pVars.MinerList = minerList
 	pVars.Totalhash = totalHashG
 	pVars.Walletbalance = walletBalance
@@ -229,7 +233,6 @@ func formatHashNum(hashrate int) string {
 
 	return strconv.Itoa(hashrate) // Meh, it'll hopefully be a while before we exceed 999GH... if so just return the raw hash
 }
-
 
 // TODO: Break out logic and console display into separate functions...
 func updateMinerStatusAndConsoleOutput() {
