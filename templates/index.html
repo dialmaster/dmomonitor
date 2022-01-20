@@ -24,6 +24,10 @@
             cursor: pointer;
           }
 
+          .late-miner-info {
+            color: red;
+          }
+
           @media screen and (min-device-width: 600px) {
             .hidden-pc {
               display: none;
@@ -108,7 +112,7 @@
           <tbody>
             {{range $name, $stats := .MinerList}}
             <tr {{if $stats.Late}}class="warn"{{end}}>
-              <td>{{$name}} {{if $stats.Late}} - OFFLINE{{end}}</td> 
+              <td>{{$name}} {{if $stats.Late}} - OFFLINE {{$stats.HowLate}}{{end}}</td> 
               <td>{{$stats.HashrateStr}}</td>
               
               {{if $stats.Late}}
@@ -128,8 +132,7 @@
           </table>
 
         </div>
-
-
+        
         {{if .Walletbalance }}
         <div class="wallet-overall-stats-container">
           <table class="styled-table">

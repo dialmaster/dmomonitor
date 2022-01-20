@@ -48,7 +48,12 @@ func main() {
 
 	go func() {
 		for {
-			consoleOutput()
+			if len(c.WalletsToMonitor) > 0 && c.NodeIP != "XXX.XXX.XXX.XXX" {
+				walletStats = txStats()
+				walletBalance = getWalletsBalance(c.WalletsToMonitor)
+			}
+
+			updateMinerStatusAndConsoleOutput()
 			time.Sleep(6 * time.Second)
 		}
 	}()
@@ -146,8 +151,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	pVars.AutoRefresh = c.AutoRefreshSeconds
 	pVars.DailyStatDays = c.DailyStatDays
 
-	upTime := time.Now().Sub(progStartTime).Round(time.Second)
-	pVars.Uptime = upTime.String()
+	pVars.Uptime = time.Now().Sub(progStartTime).Round(time.Second).String()
 
 	tmpl, err := template.ParseFS(tmplFS, fp)
 	if err != nil {
@@ -170,6 +174,7 @@ type mineRpc struct {
 	Submit      int
 	LastReport  time.Time
 	Late        bool
+	HowLate     string
 }
 
 func getMinerStatsRPC(rw http.ResponseWriter, req *http.Request) {
@@ -196,7 +201,7 @@ func handleRequests() {
 	http.HandleFunc("/minerstats", getMinerStatsRPC)
 	http.HandleFunc("/removeminer", removeLateMiner)
 	http.Handle("/js/",
-		http.StripPrefix("/js/", http.FileServer(http.FS(jsFS))))
+		http.StripPrefix("", http.FileServer(http.FS(jsFS))))
 
 	log.Fatal(http.ListenAndServe(":"+c.ServerPort, nil))
 }
@@ -219,12 +224,7 @@ func formatHashNum(hashrate int) string {
 	return "ERR"
 }
 
-func consoleOutput() {
-
-	if len(c.WalletsToMonitor) > 0 && c.NodeIP != "XXX.XXX.XXX.XXX" {
-		walletStats = txStats()
-		walletBalance = getWalletsBalance(c.WalletsToMonitor)
-	}
+func updateMinerStatusAndConsoleOutput() {
 
 	fmt.Print("\033[H\033[2J") // Clear screen
 	setColor(colorWhite)
@@ -252,8 +252,11 @@ func consoleOutput() {
 		totalHash := 0
 		for _, name := range names {
 			stats := minerList[name]
-			howLong := time.Now().Sub(stats.LastReport)
-			howLong -= howLong % time.Second
+			howLong := time.Now().Sub(stats.LastReport).Round(time.Second)
+			stats.HowLate = howLong.String()
+			mutex.Lock()
+			minerList[name] = stats
+			mutex.Unlock()
 			if howLong.Seconds() > c.MinerLateTime && stats.Late == false {
 				stats.Late = true
 				mutex.Lock()
@@ -264,6 +267,9 @@ func consoleOutput() {
 				}
 			} else if howLong.Seconds() <= c.MinerLateTime {
 				stats.Late = false
+				mutex.Lock()
+				minerList[name] = stats
+				mutex.Unlock()
 				totalHash += stats.Hashrate
 				setColor(colorGreen)
 			}
