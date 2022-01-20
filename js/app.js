@@ -8,3 +8,22 @@ function minerOnClick(name) {
 		window.location.reload();
 	}
 }
+
+window.onload = function exampleFunction() {
+	var timer = document.querySelector("body").dataset.timer;
+	document.getElementById("my-timer").innerHTML = timer + 's';
+
+	timer;
+	function myLoop() {
+		setTimeout(function() {
+
+		  document.getElementById("my-timer").innerHTML = timer + 's';
+		  timer--;
+		  if (timer > 0) {
+			myLoop();
+		  }
+		}, 1000)
+	  }
+	  
+	  myLoop();
+}

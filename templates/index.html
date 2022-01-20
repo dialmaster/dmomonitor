@@ -42,6 +42,14 @@
             margin-left: 10px;
           }
 
+          .refresh-countdown {
+            float: right;
+            position: relative;
+            margin-top:10px;
+            margin-right: 10px;
+          }
+
+
           @media screen and (min-device-width: 600px) {
             .hidden-pc {
               display: none;
@@ -50,6 +58,9 @@
 
           @media screen and (max-device-width: 600px) {
             .uptime {
+              font-size: 2vw;
+            }
+            .refresh-countdown {
               font-size: 2vw;
             }
             
@@ -115,12 +126,13 @@
         </style>
       </head>
       
-      <body>
+      <body data-Timer="{{.AutoRefresh}}">
         <center>
 
         <div class="page-container">
 
           <div class="uptime">Uptime: {{.Uptime}}</div>
+          {{if .AutoRefresh}}<div class="refresh-countdown"><span>Refresh In: </span><span id="my-timer"></span></div>{{end}}
           <h2 class="page-title">DMO-Monitor <span class="version-string">{{.VersionString}}</span></h2>
         
 
