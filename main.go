@@ -214,14 +214,20 @@ func StringSpaced(text string, spacingchar string, numspaces int) string {
 func formatHashNum(hashrate int) string {
 	if hashrate < 1024 {
 		return strconv.Itoa(hashrate)
-	} else if hashrate > 1024 && hashrate < 10000000 {
-		return strconv.Itoa(hashrate/1024) + "KH"
-	} else if hashrate >= 10000000 && hashrate < 1000000000 {
-		return strconv.Itoa(hashrate/1048576) + "MH"
-	} else if hashrate >= 1000000000 {
-		return strconv.Itoa(hashrate/1073741824) + "GH"
+	} else if hashrate > 1024 && hashrate < 1048576 {
+		scaled := float64(hashrate) / float64(1024)
+
+		return fmt.Sprintf("%.0fKH", scaled)
+	} else if hashrate >= 1048576 && hashrate < 1073741824 {
+		scaled := float64(hashrate) / float64(1048576)
+		return fmt.Sprintf("%.2fMH", scaled)
+
+	} else if hashrate >= 1073741824 && hashrate < 1099511627776 {
+		scaled := float64(hashrate) / float64(1073741824)
+		return fmt.Sprintf("%.2fGH", scaled)
 	}
-	return "ERR"
+
+	return strconv.Itoa(hashrate) // Meh, it'll hopefully be a while before we exceed 999GH... if so just return the raw hash
 }
 
 func updateMinerStatusAndConsoleOutput() {
