@@ -13,11 +13,12 @@ mining statistics. This additional functionality is really only useful for solo 
 ## Files
 
 This contains binaries for both Windows and Linux for the monitoring program.
-It also contains a Windows ONLY build of the 2.05 `DynMiner2.exe` and `dyn_miner2.cl` for use with this monitor
-Hopefully the changes needed for the miner are integrated into the Foundation build for the miner soon...
+It also contains a Windows ONLY build of the 2.05 `DynMiner2.exe` and `dyn_miner2.cl` for use with this monitor.
+Once these changes are integrated into the dynamo foundation miner, this will no longer need my provided build.
 
-Windows: dmo-monitor.exe
-Linux: dmo-monitor
+**Windows:** dmo-monitor.exe
+
+**Linux:** dmo-monitor
 
 ## Setup
 
@@ -34,6 +35,14 @@ In order to set this up, there are only a few things you need to do:
    the dmo-monitor to use. The default is 11235 If you want to access it from
    outside your local network (away from home), then you will need to forward that
    port on your router to the machine that is running dmo-monitor as well.
+
+## Telegram notification setup
+
+You can receive realtime notifications when your miners go offline via telegram.
+To set this up simply:
+* Message /start to @dmo_monitor_bot
+* Message /start to @userinfobot to get your telegram user id
+* Put your telegram user id in myconfig.yaml
 
 
 ## Usage
@@ -56,7 +65,7 @@ So the full line would look like:
 DynMiner2.exe -mode solo -server http://192.168.1.169:6433 -user username -pass password -wallet dy1qvesdfsdfsdfsdfsdfsdfefczsvf -miner GPU,16384,8,0,0 -statrpcurl http://192.168.1.133:11235/minerstats -minername TestMiner
 ```
 
-The `-statrpcurl` argument should use the IP address of the machine the dmo-monitor is running on and the port configured for that dmo-monitor in `config.yaml`. The '/minerstats' part should be left as-is
+The `-statrpcurl` argument should use the IP address of the machine the dmo-monitor is running on and the port configured for that dmo-monitor in `config.yaml`. The '/minerstats' part of the url must be left as-is
 
 Once you run the executable it will immediately start to display statistics in the console. 
 
@@ -66,7 +75,7 @@ http://localhost:11235/
 (11235 is the default port setup in the included config, but you can change it to whatever you like)
 
 You can also access this view from other computers or phones by using the IP address for the computer it is running dmo-monitor.
-This will look like (as an example):
+This will look like (as an example if you are accessing it from the another device on the same local network):
 http://192.168.1.150:11235/
 
 If you want to access it from outside your house, you will need to have
@@ -83,7 +92,9 @@ There is no support for using receiving addresses yet either.
 
 IF ALL YOU WANT TO DO IS MONITOR YOUR ACTIVE MINERS and their hashrates, submits, rejects and accepts, 
 then you should just leave the WalletsToMonitor config option BLANK like:
+```
 WalletsToMonitor: 
+```
 
 ## Compiling
 
