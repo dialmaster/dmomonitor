@@ -230,6 +230,8 @@ func formatHashNum(hashrate int) string {
 	return strconv.Itoa(hashrate) // Meh, it'll hopefully be a while before we exceed 999GH... if so just return the raw hash
 }
 
+
+// TODO: Break out logic and console display into separate functions...
 func updateMinerStatusAndConsoleOutput() {
 
 	fmt.Print("\033[H\033[2J") // Clear screen
