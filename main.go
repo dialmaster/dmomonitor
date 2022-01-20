@@ -133,7 +133,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		Uptime             string
 		MinerList          map[string]mineRpc
 		Totalhash          string
-		Totalminers        string
+		Totalminers        int
 		Walletbalance      string
 		WalletOverallStats OverallInfoTX
 		WalletDailyStats   []DayStatTX
@@ -145,6 +145,11 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 
 	var pVars pageVars
 
+	for _, stats := range minerList {
+		if !stats.Late {
+			pVars.Totalminers += 1
+		}
+	}
 	pVars.VersionString = versionString
 	pVars.MinerList = minerList
 	pVars.Totalhash = totalHashG
