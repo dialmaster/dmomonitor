@@ -194,9 +194,9 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	pVars.CurrentPrice = currentPricePerDMO
-	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.DailyAverage
-	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.DailyAverage * 7
-	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX.DailyAverage * 30
+	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay
+	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 7
+	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 30
 	pVars.VersionString = versionString
 	pVars.MinerList = minerList
 	pVars.Totalhash = totalHashG

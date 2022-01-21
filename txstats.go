@@ -39,10 +39,11 @@ type StatData struct {
 }
 
 type OverallInfoTX struct {
-	DailyAverage  float64
-	HourlyAverage float64
-	WinPercent    float64
-	Projection    string
+	DailyAverage       float64
+	HourlyAverage      float64
+	WinPercent         float64
+	Projection         string
+	CurrentCoinsPerDay float64
 }
 
 var overallInfoTX OverallInfoTX
@@ -180,9 +181,11 @@ func txStats() string {
 
 	var total = reportStats.coins
 	mutex.Lock()
-	overallInfoTX.DailyAverage = total / float64(reportDays) // TODO: Fix this! It is wrong because it includes today, which is possibly just starting
+	overallInfoTX.DailyAverage = total / float64(reportDays)
 	overallInfoTX.HourlyAverage = total / float64(reportDays) / 24.0
 	overallInfoTX.WinPercent = reportStats.roughPercent()
+	overallInfoTX.CurrentCoinsPerDay = float64(dailyStats[len(dailyStats)-2].coins) // Based on YESTERDAY so it includes a full day of reporting
+
 	mutex.Unlock()
 	outString += fmt.Sprintf("\tDaily average: %0.2f\n", total/float64(reportDays))
 	outString += fmt.Sprintf("\tHourly average: %0.2f\n", total/float64(reportDays)/24.0)
@@ -191,6 +194,7 @@ func txStats() string {
 	mutex.Lock()
 	dayStatsTX = dayStatsTX[:0]
 	mutex.Unlock()
+
 	for i := 0; i < reportDays; i++ {
 		var dayStat DayStatTX
 		var projection = ""
