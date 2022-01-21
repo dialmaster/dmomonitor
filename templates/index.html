@@ -134,7 +134,6 @@
           <div class="uptime">Uptime: {{.Uptime}}</div>
           {{if .AutoRefresh}}<div class="refresh-countdown"><span>Refresh In: </span><span id="my-timer"></span></div>{{end}}
           <h2 class="page-title">DMO-Monitor <span class="version-string">{{.VersionString}}</span></h2>
-        
 
           <div class="miners-container">
             <table class="styled-table">
@@ -172,7 +171,56 @@
             </table>
 
           </div>
-        
+
+          <div class="mining-stats-container">
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th colspan="2">Mining Stats At Current Market Price And Coin Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    Current Price of DMO from CoinGecko
+                  </td>
+                  <td>
+                    ${{printf "%.2f" .CurrentPrice}}
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    Dollars Per Day
+                  </td>
+                  <td>
+                    ${{printf "%.2f" .DollarsPerDay}}
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    Dollars Per Week
+                  </td>
+                  <td>
+                    ${{printf "%.2f" .DollarsPerWeek}}
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    Dollars Per Month
+                  </td>
+                  <td>
+                    ${{printf "%.2f" .DollarsPerMonth}}
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2"></td>
+                </tr>
+              </tbody>
+              </table>
+  
+          </div>
+
+
           {{if .Walletbalance }}
           <div class="wallet-overall-stats-container">
             <table class="styled-table">
@@ -234,11 +282,11 @@
                 <td>{{printf "%.2f" $stats.WinPercent}}</td>
               </tr>
               {{end}}
-              <tr><td colspan="4"></td></tr>
+              <tr><td colspan="4">Note: Win percentages are your percentage of all coins mined on the network.</td></tr>
 
             </tbody>
             </table>
-            <span class="note">Note: Win percentages are your percentage of all coins mined on the network.</span>
+            
           </div>
 
 

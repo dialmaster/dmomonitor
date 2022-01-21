@@ -33,6 +33,7 @@ var mutex = &sync.Mutex{}
 var totalHashG = ""
 var walletStats = ""
 var walletBalance = ""
+var currentPricePerDMO = 0.0
 
 func main() {
 
@@ -50,6 +51,7 @@ func main() {
 
 	go func() {
 		for {
+			currentPricePerDMO = getCoinGeckoDMOPrice()
 			if len(c.WalletsToMonitor) > 0 && c.NodeIP != "XXX.XXX.XXX.XXX" {
 				walletStats = txStats()
 				walletBalance = getWalletsBalance(c.WalletsToMonitor)
@@ -60,6 +62,43 @@ func main() {
 		}
 	}()
 	handleRequests()
+}
+
+// https://api.coingecko.com/api/v3/simple/price?ids=dynamo-coin&vs_currencies=USD
+func getCoinGeckoDMOPrice() float64 {
+	myPrice := 0.11
+	client := &http.Client{}
+	reqUrl := url.URL{
+		Scheme: "http",
+		Host:   "api.coingecko.com",
+		Path:   "api/v3/simple/price",
+	}
+
+	req, err := http.NewRequest("GET", reqUrl.String()+"?ids=dynamo-coin&vs_currencies=USD", nil)
+
+	type geckoPrice struct {
+		DynamoCoin struct {
+			Usd float64 `json:"usd"`
+		} `json:"dynamo-coin"`
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+		return 0.0
+	}
+	bodyText, err := io.ReadAll(resp.Body)
+
+	var myGeckoPrice geckoPrice
+
+	if err := json.Unmarshal(bodyText, &myGeckoPrice); err != nil {
+		log.Fatal(err)
+		return 0.0
+	}
+
+	myPrice = myGeckoPrice.DynamoCoin.Usd
+	return myPrice
+
 }
 
 func sendOfflineNotificationToTelegram(minerName string) {
@@ -141,6 +180,10 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		AutoRefresh        int
 		DailyStatDays      int
 		VersionString      string
+		CurrentPrice       float64
+		DollarsPerDay      float64
+		DollarsPerWeek     float64
+		DollarsPerMonth    float64
 	}
 
 	var pVars pageVars
@@ -150,6 +193,10 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			pVars.Totalminers += 1
 		}
 	}
+	pVars.CurrentPrice = currentPricePerDMO
+	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.DailyAverage
+	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.DailyAverage * 7
+	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX.DailyAverage * 30
 	pVars.VersionString = versionString
 	pVars.MinerList = minerList
 	pVars.Totalhash = totalHashG

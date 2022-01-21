@@ -180,7 +180,7 @@ func txStats() string {
 
 	var total = reportStats.coins
 	mutex.Lock()
-	overallInfoTX.DailyAverage = total / float64(reportDays)
+	overallInfoTX.DailyAverage = total / float64(reportDays) // TODO: Fix this! It is wrong because it includes today, which is possibly just starting
 	overallInfoTX.HourlyAverage = total / float64(reportDays) / 24.0
 	overallInfoTX.WinPercent = reportStats.roughPercent()
 	mutex.Unlock()
