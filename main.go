@@ -41,7 +41,7 @@ func main() {
 	if c.MinerLateTime < 15 {
 		c.MinerLateTime = 15
 	}
-	if c.DailyStatDays < 1 {
+	if c.DailyStatDays < 2 {
 		c.DailyStatDays = 4
 	}
 	// Don't let people get too nuts here
