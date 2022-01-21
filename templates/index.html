@@ -48,7 +48,9 @@
             margin-top:10px;
             margin-right: 10px;
           }
-
+          .note {
+            text-align: center;
+          }
 
           @media screen and (min-device-width: 600px) {
             .hidden-pc {
@@ -76,7 +78,7 @@
               width: 100%;
             }
             .note {
-              font-size: 2vw;
+              font-size: 2.3vw;
             }
             .styled-table {
               min-width: 90%;
@@ -172,6 +174,8 @@
 
           </div>
 
+
+          {{if .Walletbalance }}
           <div class="mining-stats-container">
             <table class="styled-table">
               <thead>
@@ -213,7 +217,7 @@
                   </td>
                 </tr>
                 <tr>
-                  <td colspan="2"></td>
+                  <td colspan="2" class="note">Based on current CoinGecko prices and the # of coins mined yesterday</td>
                 </tr>
               </tbody>
               </table>
@@ -221,7 +225,7 @@
           </div>
 
 
-          {{if .Walletbalance }}
+          
           <div class="wallet-overall-stats-container">
             <table class="styled-table">
             <thead>
@@ -235,22 +239,24 @@
                 <td>{{.Walletbalance}}</td>
               </tr>
               <tr>
-                <td>Daily Average DMO (Last {{.DailyStatDays}} days)</td>
+                <td>Daily Average DMO</td>
                 <td>{{printf "%.2f" .WalletOverallStats.DailyAverage}}</td>
               </tr>
               <tr>
-                <td>Hourly Average DMO (Last {{.DailyStatDays}} days)</td>
+                <td>Hourly Average DMO</td>
                 <td>{{printf "%.2f" .WalletOverallStats.HourlyAverage}}</td>
               </tr>
               <tr>
-                <td>Rough Block Win Percent (Last {{.DailyStatDays}} days)</td>
+                <td>Average Block Win Percent</td>
                 <td>{{printf "%.2f" .WalletOverallStats.WinPercent}}</td>
               </tr>
               <tr>
                 <td>Projected Coins for Today</td>
                 <td>{{.WalletOverallStats.Projection}}</td>
               </tr>
-              <tr><td></td><td></td></tr>
+              <tr>
+                <td colspan="2" class="note">Averages based on last {{.DailyStatDays}} days</td>
+              </tr>
 
             </tbody>
             </table>
@@ -282,7 +288,7 @@
                 <td>{{printf "%.2f" $stats.WinPercent}}</td>
               </tr>
               {{end}}
-              <tr><td colspan="4" class="note">Note: Win percentages are your percentage of all coins mined on the network.</td></tr>
+              <tr><td colspan="4" class="note">Win percentages are your percentage of all coins mined on the network.</td></tr>
 
             </tbody>
             </table>
@@ -318,8 +324,9 @@
             </table>
 
           </div>
+          {{else}}
+          <div class="note"> Mining statistics are not available unless you provide wallet and fullnode information (Eg You are solo mining)</div>
           {{end}}
-
 
         </div>
       </center>

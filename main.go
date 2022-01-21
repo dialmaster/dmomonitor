@@ -367,7 +367,7 @@ func updateMinerStatusAndConsoleOutput() {
 		setColor(colorGreen)
 	}
 
-	if c.WalletsToMonitor != "MyExampleWalletName1,MyExampleWalletName2" {
+	if c.WalletsToMonitor != "MyExampleWalletName1,MyExampleWalletName2" && len(c.WalletsToMonitor) > 0 {
 		fmt.Printf("\n\tWallets Combined Balance (%s): %s\n", c.WalletsToMonitor, walletBalance)
 
 		fmt.Printf("\n\n\n")
