@@ -9,21 +9,18 @@ function minerOnClick(name) {
 	}
 }
 
+// Countdown to page refresh
 window.onload = function exampleFunction() {
 	var timer = document.querySelector("body").dataset.timer;
-	document.getElementById("my-timer").innerHTML = timer + 's';
-
-	timer;
+	var lastRefresh = 0;
 	function myLoop() {
 		setTimeout(function() {
 
-		  document.getElementById("my-timer").innerHTML = timer + 's';
-		  timer--;
-		  if (timer > 0) {
-			myLoop();
-		  }
+		document.getElementById("my-timer").innerHTML = lastRefresh + 's';
+		lastRefresh += 1;
+		myLoop();
+		  
 		}, 1000)
 	  }
-	  
 	  myLoop();
 }
