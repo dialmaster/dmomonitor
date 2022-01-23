@@ -51,7 +51,10 @@ func main() {
 
 	go func() {
 		for {
-			currentPricePerDMO = getCoinGeckoDMOPrice()
+			var tmpCurrentPricePerDMO = getCoinGeckoDMOPrice()
+			if tmpCurrentPricePerDMO > 0.0 {
+				currentPricePerDMO = tmpCurrentPricePerDMO
+			}
 			if len(c.WalletsToMonitor) > 0 && c.NodeIP != "XXX.XXX.XXX.XXX" {
 				walletStats = txStats()
 				walletBalance = getWalletsBalance(c.WalletsToMonitor)
@@ -83,8 +86,9 @@ func getCoinGeckoDMOPrice() float64 {
 	}
 
 	resp, err := client.Do(req)
+	// Sometimes the coingecko api call fails, and we do not want that to kill our app...
 	if err != nil {
-		log.Fatal(err)
+		//log.Fatal(err)
 		return 0.0
 	}
 	bodyText, err := io.ReadAll(resp.Body)
@@ -92,7 +96,7 @@ func getCoinGeckoDMOPrice() float64 {
 	var myGeckoPrice geckoPrice
 
 	if err := json.Unmarshal(bodyText, &myGeckoPrice); err != nil {
-		log.Fatal(err)
+		//log.Fatal(err)
 		return 0.0
 	}
 

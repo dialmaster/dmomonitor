@@ -156,7 +156,7 @@ func txStats() string {
 	var beginReport = nowDay.Add(daysAgo)
 
 	for _, tx := range txList {
-		tx.dt = time.Unix(tx.TimeReceived, 0)
+		tx.dt = time.Unix(tx.Blocktime, 0)
 
 		if !tx.Generated {
 			continue
