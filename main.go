@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-var versionString = "v1.0"
+var versionString = "v1.0.0"
 
 //go:embed templates/**
 var tmplFS embed.FS
