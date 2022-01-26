@@ -277,9 +277,76 @@ func handleRequests() {
 	http.Handle("/img/",
 		http.StripPrefix("", http.FileServer(http.FS(imgFS))))
 
+    // Management related requests will require Bearer token
+	http.HandleFunc("/getminersettings", grant(getMinerSettingsRPC))
+
 	log.Fatal(http.ListenAndServe(":"+c.ServerPort, nil))
 
 }
+
+
+func grant(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+
+
+		reqToken := req.Header.Get("Authorization")
+		splitToken := strings.Split(reqToken, "Bearer ")
+		bearerToken := splitToken[1]
+
+		if (bearerToken != c.AuthToken) {
+			rw.WriteHeader(http.StatusUnauthorized)
+			rw.Header().Set("Content-Type", "application/json")
+			resp := make(map[string]string)
+			resp["message"] = "Token Invalid"
+			jsonResp, err := json.Marshal(resp)
+			if err != nil {
+				log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+			}
+			rw.Write(jsonResp)
+			return
+		}
+		fn(rw, req)
+	}
+}
+
+
+// Caller asks for settings for it's miner, we give back settings if we have any, or an empty response
+func getMinerSettingsRPC(rw http.ResponseWriter, req *http.Request) {
+	type minerConfig struct {
+		NodeUrl string
+		NodeUser string
+		NodePass string
+		WalletAddr string
+		MinerOpts string
+		RespawnSeconds int
+	}
+
+	minerName := req.URL.Query().Get("minerName")
+	fmt.Printf("getting settings for miner %s", minerName)
+
+	var thisMinerConfig minerConfig
+	reqUrl := url.URL{
+		Scheme: "http",
+		Host:   c.NodeIP + ":" + c.NodePort,
+	}
+	thisMinerConfig.NodeUrl = reqUrl.String()
+	thisMinerConfig.NodeUser = c.NodeUser
+	thisMinerConfig.NodePass = c.NodePass
+	thisMinerConfig.WalletAddr = "" // Put a receiving addr here
+	thisMinerConfig.MinerOpts = "GPU,2048,4,0,0" // Just an example
+	thisMinerConfig.RespawnSeconds = 69
+	
+	jsonResp, err := json.Marshal(thisMinerConfig)
+	if err != nil {
+		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	rw.Header().Set("Content-Type", "application/json")
+	
+	rw.Write(jsonResp)
+}
+
 
 func StringSpaced(text string, spacingchar string, numspaces int) string {
 	numpads := numspaces - len(text)
