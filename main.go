@@ -26,6 +26,9 @@ var tmplFS embed.FS
 //go:embed js/**
 var jsFS embed.FS
 
+//go:embed img/**
+var imgFS embed.FS
+
 var c conf
 var minerList = make(map[string]mineRpc)
 var progStartTime = time.Now()
@@ -38,6 +41,10 @@ var currentPricePerDMO = 0.0
 func main() {
 
 	c.getConf()
+	if c.QuietMode {
+		fmt.Printf("Starting monitor in quiet mode (no console output). Access stats at http://localhost:%s/stats\n", c.ServerPort)
+	}
+
 	if c.MinerLateTime < 15 {
 		c.MinerLateTime = 15
 	}
@@ -169,8 +176,8 @@ func getWalletsBalance(walletNames string) string {
 	return fmt.Sprintf("%.3f", walletBalanceTotal)
 }
 
-func homePage(w http.ResponseWriter, r *http.Request) {
-	fp := path.Join("templates", "index.html")
+func statsPage(w http.ResponseWriter, r *http.Request) {
+	fp := path.Join("templates", "stats.html")
 
 	type pageVars struct {
 		Uptime             string
@@ -253,17 +260,25 @@ func getMinerStatsRPC(rw http.ResponseWriter, req *http.Request) {
 }
 
 func removeLateMiner(rw http.ResponseWriter, req *http.Request) {
-	delete(minerList, req.URL.Query().Get("minerName"))
+	minerName := req.URL.Query().Get("minerName")
+	// Do not allow removal of active miners
+	if minerList[minerName].Late {
+		delete(minerList, minerName)
+	}
 }
 
 func handleRequests() {
-	http.HandleFunc("/", homePage)
+	http.HandleFunc("/stats", statsPage)
 	http.HandleFunc("/minerstats", getMinerStatsRPC)
 	http.HandleFunc("/removeminer", removeLateMiner)
 	http.Handle("/js/",
 		http.StripPrefix("", http.FileServer(http.FS(jsFS))))
 
+	http.Handle("/img/",
+		http.StripPrefix("", http.FileServer(http.FS(imgFS))))
+
 	log.Fatal(http.ListenAndServe(":"+c.ServerPort, nil))
+
 }
 
 func StringSpaced(text string, spacingchar string, numspaces int) string {
@@ -293,22 +308,25 @@ func formatHashNum(hashrate int) string {
 // TODO: Break out logic and console display into separate functions...
 func updateMinerStatusAndConsoleOutput() {
 
-	fmt.Print("\033[H\033[2J") // Clear screen
-	setColor(colorWhite)
-	fmt.Printf("\t\t\t\tDMO-Monitor %s\n\n", versionString)
+	if !c.QuietMode {
+		fmt.Print("\033[H\033[2J") // Clear screen
+		setColor(colorWhite)
+		fmt.Printf("\t\t\t\tDMO-Monitor %s\n\n", versionString)
 
-	setColor(colorYellow)
-	fmt.Printf("\t%s%s%s%s%s%s\n",
-		StringSpaced("Miner Name", " ", 24),
-		StringSpaced("Last Reported", " ", 35),
-		StringSpaced("Hashrate", " ", 12),
-		StringSpaced("Submitted", " ", 12),
-		StringSpaced("Accepted", " ", 12),
-		StringSpaced("Rejected", " ", 12))
-
+		setColor(colorYellow)
+		fmt.Printf("\t%s%s%s%s%s%s\n",
+			StringSpaced("Miner Name", " ", 24),
+			StringSpaced("Last Reported", " ", 35),
+			StringSpaced("Hashrate", " ", 12),
+			StringSpaced("Submitted", " ", 12),
+			StringSpaced("Accepted", " ", 12),
+			StringSpaced("Rejected", " ", 12))
+	}
 	warnings := ""
 	if len(minerList) > 0 {
-		setColor(colorGreen)
+		if !c.QuietMode {
+			setColor(colorGreen)
+		}
 		names := make([]string, 0)
 		for name, _ := range minerList {
 			names = append(names, name)
@@ -338,40 +356,49 @@ func updateMinerStatusAndConsoleOutput() {
 				minerList[name] = stats
 				mutex.Unlock()
 				totalHash += stats.Hashrate
-				setColor(colorGreen)
+				if !c.QuietMode {
+					setColor(colorGreen)
+				}
 			}
 
 			if stats.Late {
 				warnings += "\n\tWARN: " + name + " has not reported in " + howLong.String() + "\n"
-				setColor(colorRed)
+				if !c.QuietMode {
+					setColor(colorRed)
+				}
 			}
 
-			fmt.Printf("\t%s%s%s%s%s%s\n",
-				StringSpaced(name, " ", 24),
-				StringSpaced(stats.LastReport.Format("2006-01-02 15:04:05"), " ", 35),
-				StringSpaced(stats.HashrateStr, " ", 12),
-				StringSpaced(strconv.Itoa(stats.Submit), " ", 12),
-				StringSpaced(strconv.Itoa(stats.Accept), " ", 12),
-				strconv.Itoa(stats.Reject),
-			)
-			setColor(colorGreen)
+			if !c.QuietMode {
+				fmt.Printf("\t%s%s%s%s%s%s\n",
+					StringSpaced(name, " ", 24),
+					StringSpaced(stats.LastReport.Format("2006-01-02 15:04:05"), " ", 35),
+					StringSpaced(stats.HashrateStr, " ", 12),
+					StringSpaced(strconv.Itoa(stats.Submit), " ", 12),
+					StringSpaced(strconv.Itoa(stats.Accept), " ", 12),
+					strconv.Itoa(stats.Reject),
+				)
+				setColor(colorGreen)
+			}
 		}
-
-		fmt.Printf("\n\tTotal Miners: %d", len(minerList))
 		totalHashG = formatHashNum(totalHash)
-		fmt.Printf("\n\tTotal Hashrate: %s", totalHashG)
+		if !c.QuietMode {
+			fmt.Printf("\n\tTotal Miners: %d", len(minerList))
+			fmt.Printf("\n\tTotal Hashrate: %s", totalHashG)
+		}
 	} else {
-		setColor(colorRed)
-		fmt.Printf("\t\t\t\tNo active miners\n")
+		if !c.QuietMode {
+			setColor(colorRed)
+			fmt.Printf("\t\t\t\tNo active miners\n")
+		}
 	}
 
-	if len(warnings) > 0 {
+	if len(warnings) > 0 && !c.QuietMode {
 		setColor(colorRed)
 		fmt.Printf(warnings)
 		setColor(colorGreen)
 	}
 
-	if c.WalletsToMonitor != "MyExampleWalletName1,MyExampleWalletName2" && len(c.WalletsToMonitor) > 0 {
+	if c.WalletsToMonitor != "MyExampleWalletName1,MyExampleWalletName2" && len(c.WalletsToMonitor) > 0 && !c.QuietMode {
 		fmt.Printf("\n\tWallets Combined Balance (%s): %s\n", c.WalletsToMonitor, walletBalance)
 
 		fmt.Printf("\n\n\n")

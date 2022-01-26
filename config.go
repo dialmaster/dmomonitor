@@ -18,6 +18,8 @@ type conf struct {
 	MinerLateTime      float64 `yaml:"MinerLateTime"`
 	AutoRefreshSeconds int     `yaml:"AutoRefreshSeconds"`
 	DailyStatDays      int     `yaml:"DailyStatDays"`
+	QuietMode          bool    `yaml:"QuietMode"`
+	AuthToken          string  `yaml:"AuthToken"`
 }
 
 func (c *conf) getConf() *conf {

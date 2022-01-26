@@ -40,3 +40,9 @@ NodePass: somepassword
   # You must populate this with at least one wallet name if you want to use the Wallet Stats
 WalletsToMonitor: MyExampleWalletName1,MyExampleWalletName2
   #### End Wallet Stats Config Options
+
+  # Set to true to disable most console output
+QuietMode: false
+
+  # Bearer token for management requests. NOT CURRENTLY USED
+AuthToken: 
