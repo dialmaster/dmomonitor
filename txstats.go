@@ -95,8 +95,8 @@ func fetchTX(u *url.URL) []*Transaction {
 	var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","method":"listtransactions","params":["*", 10000, 0]}`)
 	var err = doPost(u, data, &resp)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to POST to URL %q: %s", u.String(), err)
-		os.Exit(2)
+		// Just spit out an error... no stats will be displayed. I should probably bubble errors up to the UI, but this will show in the console.
+		fmt.Fprintf(os.Stderr, "Unable to POST to URL %q: %s\n", u.String(), err)
 	}
 
 	return resp.Results
