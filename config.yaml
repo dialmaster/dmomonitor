@@ -5,15 +5,15 @@ ServerPort: 11235
   #### END REQUIRED PARAMS
 
   # The number of seconds for the webui to wait before it auto-refreshes itself
-  # Default is 0 and means autorefresh is disabled.
-AutoRefreshSeconds: 5
+  # Default is 0 and means autorefresh is disabled. Min is 10 seconds.
+AutoRefreshSeconds: 10
 
   # The number of seconds a miner can not report in before it is considered late/offline.
   # Minimum is 15 seconds
-MinerLateTime: 15
+MinerLateTime: 20
 
   # The number of days back that you want to show daily stats for. Defaults to 4 if not set.
-  # Min is 1, max is 20
+  # Min is 1, max is 21
 DailyStatDays: 5
 
   # Used to send notifications when your miners go offline via telegram

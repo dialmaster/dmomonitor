@@ -46,15 +46,18 @@ func main() {
 		fmt.Printf("Starting monitor in quiet mode (no console output). Access stats at http://localhost:%s/stats\n", c.ServerPort)
 	}
 
-	if c.MinerLateTime < 15 {
-		c.MinerLateTime = 15
+	if c.MinerLateTime < 20 {
+		c.MinerLateTime = 20
 	}
 	if c.DailyStatDays < 2 {
-		c.DailyStatDays = 4
+		c.DailyStatDays = 3
 	}
 	// Don't let people get too nuts here
 	if c.DailyStatDays > 21 {
 		c.DailyStatDays = 21
+	}
+	if c.AutoRefreshSeconds < 10 && c.AutoRefreshSeconds > 0 {
+		c.AutoRefreshSeconds = 10
 	}
 
 	if len(c.AddrsToMonitor) > 0 {
@@ -72,7 +75,7 @@ func main() {
 			}
 
 			updateMinerStatus()
-			time.Sleep(6 * time.Second)
+			time.Sleep(10 * time.Second)
 		}
 	}()
 	handleRequests()
