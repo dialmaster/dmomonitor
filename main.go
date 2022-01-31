@@ -66,15 +66,15 @@ func main() {
 
 	go func() {
 		for {
-			var tmpCurrentPricePerDMO = getCoinGeckoDMOPrice()
-			if tmpCurrentPricePerDMO > 0.0 {
-				currentPricePerDMO = tmpCurrentPricePerDMO
-			}
+			getCoinGeckoDMOPrice()
 			if len(c.AddrsToMonitor) > 0 {
 				txStats()
 			}
 
 			updateMinerStatus()
+			if !c.QuietMode {
+				consoleOutput()
+			}
 			time.Sleep(10 * time.Second)
 		}
 	}()
@@ -82,8 +82,8 @@ func main() {
 }
 
 // https://api.coingecko.com/api/v3/simple/price?ids=dynamo-coin&vs_currencies=USD
-func getCoinGeckoDMOPrice() float64 {
-	myPrice := 0.11
+func getCoinGeckoDMOPrice() {
+
 	client := &http.Client{}
 	reqUrl := url.URL{
 		Scheme: "http",
@@ -102,21 +102,20 @@ func getCoinGeckoDMOPrice() float64 {
 	resp, err := client.Do(req)
 	// Sometimes the coingecko api call fails, and we do not want that to kill our app...
 	if err != nil {
-		//log.Fatal(err)
-		return 0.0
+		return
 	}
 	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
 
 	var myGeckoPrice geckoPrice
 
 	if err := json.Unmarshal(bodyText, &myGeckoPrice); err != nil {
-		//log.Fatal(err)
-		return 0.0
+		return
 	}
 
-	myPrice = myGeckoPrice.DynamoCoin.Usd
-	return myPrice
-
+	currentPricePerDMO = myGeckoPrice.DynamoCoin.Usd
 }
 
 func sendOfflineNotificationToTelegram(minerName string) {
@@ -349,32 +348,21 @@ func updateMinerStatus() {
 
 // TODO: Add console output back in
 func consoleOutput() {
+	fmt.Print("\033[H\033[2J") // Clear screen
+	setColor(colorBrightWhite)
+	fmt.Printf("\t\t\t\tDMO-Monitor %s\n\n", versionString)
+	setColor(colorYellow)
+	fmt.Printf("\t%s%s%s%s%s%s\n",
+		StringSpaced("Miner Name", " ", 24),
+		StringSpaced("Last Reported", " ", 35),
+		StringSpaced("Hashrate", " ", 12),
+		StringSpaced("Submitted", " ", 12),
+		StringSpaced("Accepted", " ", 12),
+		StringSpaced("Rejected", " ", 12))
 
-}
-
-// TODO: Break out logic and console display into separate functions...
-/* DEPRECATED
-func updateMinerStatusAndConsoleOutput() {
-
-	if !c.QuietMode {
-		fmt.Print("\033[H\033[2J") // Clear screen
-		setColor(colorWhite)
-		fmt.Printf("\t\t\t\tDMO-Monitor %s\n\n", versionString)
-
-		setColor(colorYellow)
-		fmt.Printf("\t%s%s%s%s%s%s\n",
-			StringSpaced("Miner Name", " ", 24),
-			StringSpaced("Last Reported", " ", 35),
-			StringSpaced("Hashrate", " ", 12),
-			StringSpaced("Submitted", " ", 12),
-			StringSpaced("Accepted", " ", 12),
-			StringSpaced("Rejected", " ", 12))
-	}
 	warnings := ""
 	if len(minerList) > 0 {
-		if !c.QuietMode {
-			setColor(colorGreen)
-		}
+		setColor(colorGreen)
 		names := make([]string, 0)
 		for name, _ := range minerList {
 			names = append(names, name)
@@ -382,78 +370,46 @@ func updateMinerStatusAndConsoleOutput() {
 
 		sort.Strings(names)
 
-		totalHash := 0
 		for _, name := range names {
 			stats := minerList[name]
-			howLong := time.Now().Sub(stats.LastReport).Round(time.Second)
-			stats.HowLate = howLong.String()
-			mutex.Lock()
-			minerList[name] = stats
-			mutex.Unlock()
-			if howLong.Seconds() > c.MinerLateTime && stats.Late == false {
-				stats.Late = true
-				mutex.Lock()
-				minerList[name] = stats
-				mutex.Unlock()
-				if len(c.TelegramUserId) > 0 {
-					sendOfflineNotificationToTelegram(name)
-				}
-			} else if howLong.Seconds() <= c.MinerLateTime {
-				stats.Late = false
-				mutex.Lock()
-				minerList[name] = stats
-				mutex.Unlock()
-				totalHash += stats.Hashrate
-				if !c.QuietMode {
-					setColor(colorGreen)
-				}
-			}
+			setColor(colorGreen)
 
 			if stats.Late {
-				warnings += "\n\tWARN: " + name + " has not reported in " + howLong.String() + "\n"
-				if !c.QuietMode {
-					setColor(colorRed)
-				}
+				warnings += "\n\tWARN: " + name + " has not reported in " + stats.HowLate + "\n"
+				setColor(colorRed)
 			}
 
-			if !c.QuietMode {
-				fmt.Printf("\t%s%s%s%s%s%s\n",
-					StringSpaced(name, " ", 24),
-					StringSpaced(stats.LastReport.Format("2006-01-02 15:04:05"), " ", 35),
-					StringSpaced(stats.HashrateStr, " ", 12),
-					StringSpaced(strconv.Itoa(stats.Submit), " ", 12),
-					StringSpaced(strconv.Itoa(stats.Accept), " ", 12),
-					strconv.Itoa(stats.Reject),
-				)
-				setColor(colorGreen)
-			}
+			fmt.Printf("\t%s%s%s%s%s%s\n",
+				StringSpaced(name, " ", 24),
+				StringSpaced(stats.LastReport.Format("2006-01-02 15:04:05"), " ", 35),
+				StringSpaced(stats.HashrateStr, " ", 12),
+				StringSpaced(strconv.Itoa(stats.Submit), " ", 12),
+				StringSpaced(strconv.Itoa(stats.Accept), " ", 12),
+				strconv.Itoa(stats.Reject),
+			)
+			setColor(colorGreen)
 		}
-		totalHashG = formatHashNum(totalHash)
-		if !c.QuietMode {
-			fmt.Printf("\n\tTotal Miners: %d", len(minerList))
-			fmt.Printf("\n\tTotal Hashrate: %s", totalHashG)
-		}
+
+		fmt.Printf("\n\tTotal Miners: %d", len(minerList))
+		fmt.Printf("\n\tTotal Hashrate: %s", totalHashG)
 	} else {
-		if !c.QuietMode {
-			setColor(colorRed)
-			fmt.Printf("\t\t\t\tNo active miners\n")
-		}
+		setColor(colorRed)
+		fmt.Printf("\t\t\t\tNo active miners\n")
 	}
 
-	if len(warnings) > 0 && !c.QuietMode {
+	if len(warnings) > 0 {
 		setColor(colorRed)
 		fmt.Printf(warnings)
 		setColor(colorGreen)
 	}
 
-	if c.WalletsToMonitor != "MyExampleWalletName1,MyExampleWalletName2" && len(c.WalletsToMonitor) > 0 && !c.QuietMode {
-		fmt.Printf("\n\tWallets Combined Balance (%s): %s\n", c.WalletsToMonitor, walletBalance)
+	if c.AddrsToMonitor != "" {
 
-		fmt.Printf("\n\n\n")
 		setColor(colorYellow)
-		fmt.Printf("\t\t\t\tWallet Mining Stats for Wallets: %s\n", c.WalletsToMonitor)
+		fmt.Printf("\n\n\t\t\t\tAddress Mining Stats for Addresses: %s\n", c.AddrsToMonitor)
 		setColor(colorGreen)
 
-		fmt.Println(walletStats)
+		fmt.Println("\n\t\tTODO: Re-implement address mining stats in console")
 	}
-} */
+
+}

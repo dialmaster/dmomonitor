@@ -27,14 +27,6 @@ type Transaction struct {
 	TimeReceived  int64 `json:"timereceived"`
 }
 
-type StatData struct {
-	firstBlock int64
-	lastBlock  int64
-	duration   time.Duration
-	blocks     int64
-	coins      float64
-}
-
 type OverallInfoTX struct {
 	DailyAverage       float64
 	HourlyAverage      float64
@@ -86,6 +78,7 @@ http://dmo-monitor.com:9143/getminingstats
     "Addresses": "dy1qpfr5yhdkgs6jyuk945y23pskdxmy9ajefczsvm",
     "TZOffset": -28800
 }
+NOTE: If an error occurs, then just do not update the stats....
 */
 func txStats() {
 	client := &http.Client{}
