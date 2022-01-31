@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -18,7 +17,9 @@ import (
 	"time"
 )
 
-var versionString = "v1.1.0"
+//TODO: Restore console output, code cleanup.
+
+var versionString = "v1.2.0"
 
 //go:embed templates/**
 var tmplFS embed.FS
@@ -56,18 +57,21 @@ func main() {
 		c.DailyStatDays = 21
 	}
 
+	if len(c.AddrsToMonitor) > 0 {
+		txStats()
+	}
+
 	go func() {
 		for {
 			var tmpCurrentPricePerDMO = getCoinGeckoDMOPrice()
 			if tmpCurrentPricePerDMO > 0.0 {
 				currentPricePerDMO = tmpCurrentPricePerDMO
 			}
-			if len(c.WalletsToMonitor) > 0 && c.NodeIP != "XXX.XXX.XXX.XXX" {
-				walletStats = txStats()
-				walletBalance = getWalletsBalance(c.WalletsToMonitor)
+			if len(c.AddrsToMonitor) > 0 {
+				txStats()
 			}
 
-			updateMinerStatusAndConsoleOutput()
+			updateMinerStatus()
 			time.Sleep(6 * time.Second)
 		}
 	}()
@@ -133,49 +137,6 @@ func sendOfflineNotificationToTelegram(minerName string) {
 	defer resp.Body.Close()
 }
 
-func getWalletsBalance(walletNames string) string {
-	walletBalanceTotal := 0.0000
-
-	type walletResp struct {
-		Balance float64 `json:"result"`
-		ID      string  `json:"id"`
-	}
-
-	var wallets = strings.Split(walletNames, ",")
-
-	for _, w := range wallets {
-		var thisWallet = strings.TrimSpace(w)
-
-		client := &http.Client{}
-		reqUrl := url.URL{
-			Scheme: "http",
-			Host:   c.NodeIP + ":" + c.NodePort,
-			Path:   "wallet/" + thisWallet,
-		}
-
-		var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","method":"getbalance"}`)
-
-		req, err := http.NewRequest("POST", reqUrl.String(), data)
-		req.SetBasicAuth(c.NodeUser, c.NodePass)
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Fatal(err)
-			return "Unable to make request to wallet: " + err.Error()
-		}
-		bodyText, err := io.ReadAll(resp.Body)
-
-		var myWalletBalance walletResp
-
-		if err := json.Unmarshal(bodyText, &myWalletBalance); err != nil {
-			return "Unable to decode json from wallet request: " + err.Error()
-		}
-
-		walletBalanceTotal += myWalletBalance.Balance
-	}
-
-	return fmt.Sprintf("%.3f", walletBalanceTotal)
-}
-
 func statsPage(w http.ResponseWriter, r *http.Request) {
 	fp := path.Join("templates", "stats.html")
 
@@ -184,7 +145,6 @@ func statsPage(w http.ResponseWriter, r *http.Request) {
 		MinerList          map[string]mineRpc
 		Totalhash          string
 		Totalminers        int
-		Walletbalance      string
 		WalletOverallStats OverallInfoTX
 		WalletDailyStats   []DayStatTX
 		WalletHourlyStats  []HourStatTX
@@ -204,6 +164,7 @@ func statsPage(w http.ResponseWriter, r *http.Request) {
 			pVars.Totalminers += 1
 		}
 	}
+
 	pVars.CurrentPrice = currentPricePerDMO
 	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay
 	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 7
@@ -211,7 +172,6 @@ func statsPage(w http.ResponseWriter, r *http.Request) {
 	pVars.VersionString = versionString
 	pVars.MinerList = minerList
 	pVars.Totalhash = totalHashG
-	pVars.Walletbalance = walletBalance
 	pVars.WalletOverallStats = overallInfoTX
 	pVars.WalletDailyStats = dayStatsTX
 	pVars.WalletHourlyStats = hourStatsTX
@@ -305,7 +265,92 @@ func formatHashNum(hashrate int) string {
 	return strconv.Itoa(hashrate) // Meh, it'll hopefully be a while before we exceed 999GH... if so just return the raw hash
 }
 
+func updateMinerStatus() {
+	if len(minerList) > 0 {
+		names := make([]string, 0)
+		for name, _ := range minerList {
+			names = append(names, name)
+		}
+
+		sort.Strings(names)
+
+		totalHash := 0
+		for _, name := range names {
+			stats := minerList[name]
+			howLong := time.Now().Sub(stats.LastReport).Round(time.Second)
+			stats.HowLate = howLong.String()
+			mutex.Lock()
+			minerList[name] = stats
+			mutex.Unlock()
+			if howLong.Seconds() > c.MinerLateTime && stats.Late == false {
+				stats.Late = true
+				mutex.Lock()
+				minerList[name] = stats
+				mutex.Unlock()
+				if len(c.TelegramUserId) > 0 {
+					sendOfflineNotificationToTelegram(name)
+				}
+			} else if howLong.Seconds() <= c.MinerLateTime {
+				stats.Late = false
+				mutex.Lock()
+				minerList[name] = stats
+				mutex.Unlock()
+				totalHash += stats.Hashrate
+			}
+		}
+		totalHashG = formatHashNum(totalHash)
+	}
+
+	nDays := len(addrStats.DailyStats)
+	overallInfoTX.CurrentCoinsPerDay = addrStats.DailyStats[nDays-2].Coins
+	overallInfoTX.Projection = fmt.Sprintf("%.1f", addrStats.ProjectedCoinsToday)
+
+	// Daily Average is the Average of the average of all days except today...
+	tmpCoins := 0.0
+	tmpPerc := 0.0
+	dayStatsTX = nil
+	for i := 0; i < nDays; i++ {
+
+		var thisDay DayStatTX
+		thisDay.Day = addrStats.DailyStats[i].Day
+		thisDay.CoinCount = addrStats.DailyStats[i].Coins
+		thisDay.WinPercent = addrStats.DailyStats[i].WinPercent
+		thisDay.CoinsPerHour = thisDay.CoinCount / 24.0
+
+		if i < (nDays - 1) {
+			tmpCoins += addrStats.DailyStats[i].Coins
+			tmpPerc += addrStats.DailyStats[i].WinPercent
+		} else {
+			thisDay.CoinsPerHour = addrStats.ProjectedCoinsToday / 24.0
+		}
+
+		dayStatsTX = append(dayStatsTX, thisDay)
+
+	}
+	overallInfoTX.DailyAverage = tmpCoins / (float64(nDays) - 1.0)
+	overallInfoTX.HourlyAverage = overallInfoTX.DailyAverage / 24.0
+	overallInfoTX.WinPercent = tmpPerc / (float64(nDays) - 1.0)
+
+	nHours := len(addrStats.HourlyStats)
+
+	hourStatsTX = nil
+	for j := 0; j < nHours; j++ {
+		var thisHour HourStatTX
+		thisHour.Hour = addrStats.HourlyStats[j].Hour
+		thisHour.CoinCount = float64(addrStats.HourlyStats[j].Coins)
+		thisHour.CoinsPerMinute = float64(addrStats.HourlyStats[j].Coins) * (1.0 / 60.0)
+		hourStatsTX = append(hourStatsTX, thisHour)
+	}
+
+}
+
+// TODO: Add console output back in
+func consoleOutput() {
+
+}
+
 // TODO: Break out logic and console display into separate functions...
+/* DEPRECATED
 func updateMinerStatusAndConsoleOutput() {
 
 	if !c.QuietMode {
@@ -408,4 +453,4 @@ func updateMinerStatusAndConsoleOutput() {
 
 		fmt.Println(walletStats)
 	}
-}
+} */

@@ -1,18 +1,15 @@
 package main
 
 import (
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"gopkg.in/yaml.v2"
 )
 
 type conf struct {
-	NodeIP             string  `yaml:"NodeIP"`
-	NodePort           string  `yaml:"NodePort"`
-	NodeUser           string  `yaml:"NodeUser"`
-	NodePass           string  `yaml:"NodePass"`
-	WalletsToMonitor   string  `yaml:"WalletsToMonitor"`
+	AddrsToMonitor     string  `yaml:"AddrsToMonitor"`
 	ServerPort         string  `yaml:"ServerPort"`
 	TelegramUserId     string  `yaml:"TelegramUserId"`
 	MinerLateTime      float64 `yaml:"MinerLateTime"`

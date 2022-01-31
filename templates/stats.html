@@ -209,7 +209,7 @@
           </div>
 
 
-          {{if .Walletbalance }}
+          {{if .WalletOverallStats.DailyAverage }}
           <div class="mining-stats-container">
             <table class="styled-table">
               <thead>
@@ -268,10 +268,6 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Current DMO Balance</td>
-                <td>{{.Walletbalance}}</td>
-              </tr>
               <tr>
                 <td>Daily Average DMO</td>
                 <td>{{printf "%.2f" .WalletOverallStats.DailyAverage}}</td>
@@ -359,7 +355,7 @@
 
           </div>
           {{else}}
-          <div class="note"> Mining statistics are not available unless you provide wallet and fullnode information (Eg You are solo mining)</div>
+          <div class="note"> Mining statistics are not available unless you provide at least one receiving address to track stats on.</div>
           {{end}}
 
         </div>
