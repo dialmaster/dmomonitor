@@ -33,6 +33,7 @@ type OverallInfoTX struct {
 	WinPercent         float64
 	Projection         string
 	CurrentCoinsPerDay float64
+	NetHash            string
 }
 
 var overallInfoTX OverallInfoTX
@@ -68,6 +69,7 @@ type AddrStatResponse struct {
 		WinPercent float64 `json:"WinPercent"`
 	} `json:"DailyStats"`
 	ProjectedCoinsToday float64 `json:"ProjectedCoinsToday"`
+	NetHash             float64 `json:"NetHash"`
 }
 
 var addrStats AddrStatResponse

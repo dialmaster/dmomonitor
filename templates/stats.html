@@ -214,10 +214,19 @@
             <table class="styled-table">
               <thead>
                 <tr>
-                  <th colspan="2">Mining Stats At Current Market Price And Coin Rate</th>
+                  <th colspan="2">Mining Stats</th>
                 </tr>
               </thead>
               <tbody>
+                <tr>
+                  <td>
+                    Current Nethash
+                  </td>
+                  <td>
+                    {{.NetHash}}
+                  </td>
+                </tr>
+
                 <tr>
                   <td>
                     Current Price of DMO from CoinGecko
@@ -264,7 +273,7 @@
             <table class="styled-table">
             <thead>
               <tr>
-                <th colspan="2">Mining Wallets Overall Info</th>
+                <th colspan="2">Mining Address Coin Overview</th>
               </tr>
             </thead>
             <tbody>
@@ -298,7 +307,7 @@
             <table class="styled-table">
             <thead>
               <tr>
-                <th colspan="4">Mining Wallets - Last {{.DailyStatDays}} Days Stats</th>
+                <th colspan="4">Coins - Last {{.DailyStatDays}} Days Stats</th>
               </tr>
             </thead>
             <tbody>
@@ -330,7 +339,7 @@
             <table class="styled-table">
             <thead>
               <tr>
-                <th colspan="3">Mining Wallets - Todays Hourly Stats</th>
+                <th colspan="3">Coins - Todays Hourly Stats</th>
               </tr>
             </thead>
             <tbody>

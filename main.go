@@ -157,6 +157,7 @@ func statsPage(w http.ResponseWriter, r *http.Request) {
 		DollarsPerDay      float64
 		DollarsPerWeek     float64
 		DollarsPerMonth    float64
+		NetHash            string
 	}
 
 	var pVars pageVars
@@ -167,6 +168,7 @@ func statsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	pVars.NetHash = overallInfoTX.NetHash
 	pVars.CurrentPrice = currentPricePerDMO
 	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay
 	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 7
@@ -306,6 +308,7 @@ func updateMinerStatus() {
 	nDays := len(addrStats.DailyStats)
 	overallInfoTX.CurrentCoinsPerDay = addrStats.DailyStats[nDays-2].Coins
 	overallInfoTX.Projection = fmt.Sprintf("%.1f", addrStats.ProjectedCoinsToday)
+	overallInfoTX.NetHash = formatHashNum(int(addrStats.NetHash))
 
 	// Daily Average is the Average of the average of all days except today...
 	tmpCoins := 0.0
