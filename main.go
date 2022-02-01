@@ -417,8 +417,9 @@ func consoleOutput() {
 	if c.AddrsToMonitor != "" {
 
 		setColor(H1Col)
-		fmt.Printf("\n\n\t\t\t\t\tAddress Mining Stats for Address(es)\n\n")
+		fmt.Printf("\n\n\t\t\t\t\tAddress Mining Stats for Address(es)\n")
 		setColor(H2Col)
+		fmt.Printf("\n\t\t\t\tDaily Statistics (Last %d Days)\n", c.DailyStatDays)
 		fmt.Printf("\t%s%s%s%s\n",
 			StringSpaced("Day", " ", 24),
 			StringSpaced("Coins", " ", 35),
@@ -433,6 +434,23 @@ func consoleOutput() {
 				StringSpaced(fmt.Sprintf("%.2f", day.CoinsPerHour), " ", 12),
 				StringSpaced(fmt.Sprintf("%.2f", day.WinPercent), " ", 12))
 		}
+
+		setColor(H2Col)
+		fmt.Printf("\n\t\t\t\tTodays Hourly Statistics\n")
+		fmt.Printf("\t%s%s%s\n",
+			StringSpaced("Hour", " ", 24),
+			StringSpaced("Coins", " ", 35),
+			StringSpaced("Coins/Min", " ", 12))
+
+		setColor(H3Col)
+
+		for _, hour := range hourStatsTX {
+			fmt.Printf("\t%s%s%s\n",
+				StringSpaced(fmt.Sprintf("%d", hour.Hour), " ", 24),
+				StringSpaced(fmt.Sprintf("%.2f", hour.CoinCount), " ", 35),
+				StringSpaced(fmt.Sprintf("%.2f", hour.CoinsPerMinute), " ", 12))
+		}
+
 		fmt.Printf("\n\t%s\n",
 			StringSpaced(fmt.Sprintf("Projected Coins Today: %s", overallInfoTX.Projection), " ", 40))
 
