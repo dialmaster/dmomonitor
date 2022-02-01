@@ -348,10 +348,20 @@ func updateMinerStatus() {
 
 // TODO: Add console output back in
 func consoleOutput() {
+
+	var H1Col = colorBrightCyan
+	var H2Col = colorBrightGreen
+	var H3Col = colorBrightBlue
+	var WarnCol = colorRed
+
 	fmt.Print("\033[H\033[2J") // Clear screen
 	setColor(colorBrightWhite)
-	fmt.Printf("\t\t\t\tDMO-Monitor %s\n\n", versionString)
-	setColor(colorYellow)
+	fmt.Printf("\t\t\t\t\t\tDMO-Monitor %s\n\n", versionString)
+
+	setColor(H1Col)
+	fmt.Printf("\t\t\t\t\tMiner Monitoring Stats\n\n")
+
+	setColor(H2Col)
 	fmt.Printf("\t%s%s%s%s%s%s\n",
 		StringSpaced("Miner Name", " ", 24),
 		StringSpaced("Last Reported", " ", 35),
@@ -362,7 +372,7 @@ func consoleOutput() {
 
 	warnings := ""
 	if len(minerList) > 0 {
-		setColor(colorGreen)
+		setColor(H3Col)
 		names := make([]string, 0)
 		for name, _ := range minerList {
 			names = append(names, name)
@@ -372,11 +382,11 @@ func consoleOutput() {
 
 		for _, name := range names {
 			stats := minerList[name]
-			setColor(colorGreen)
+			setColor(H3Col)
 
 			if stats.Late {
 				warnings += "\n\tWARN: " + name + " has not reported in " + stats.HowLate + "\n"
-				setColor(colorRed)
+				setColor(WarnCol)
 			}
 
 			fmt.Printf("\t%s%s%s%s%s%s\n",
@@ -387,29 +397,48 @@ func consoleOutput() {
 				StringSpaced(strconv.Itoa(stats.Accept), " ", 12),
 				strconv.Itoa(stats.Reject),
 			)
-			setColor(colorGreen)
+			setColor(H3Col)
 		}
 
-		fmt.Printf("\n\tTotal Miners: %d", len(minerList))
-		fmt.Printf("\n\tTotal Hashrate: %s", totalHashG)
+		fmt.Printf("\n\t%s%s\n",
+			StringSpaced(fmt.Sprintf("Total Miners: %d", len(minerList)), " ", 32),
+			StringSpaced(fmt.Sprintf("Total Hashrate: %s", totalHashG), " ", 32))
 	} else {
-		setColor(colorRed)
+		setColor(WarnCol)
 		fmt.Printf("\t\t\t\tNo active miners\n")
 	}
 
 	if len(warnings) > 0 {
-		setColor(colorRed)
+		setColor(WarnCol)
 		fmt.Printf(warnings)
-		setColor(colorGreen)
+		setColor(H3Col)
 	}
 
 	if c.AddrsToMonitor != "" {
 
-		setColor(colorYellow)
-		fmt.Printf("\n\n\t\t\t\tAddress Mining Stats for Addresses: %s\n", c.AddrsToMonitor)
-		setColor(colorGreen)
+		setColor(H1Col)
+		fmt.Printf("\n\n\t\t\t\t\tAddress Mining Stats for Address(es)\n\n")
+		setColor(H2Col)
+		fmt.Printf("\t%s%s%s%s\n",
+			StringSpaced("Day", " ", 24),
+			StringSpaced("Coins", " ", 35),
+			StringSpaced("Coins/Hr", " ", 12),
+			StringSpaced("Win Percent", " ", 12))
+		setColor(H3Col)
 
-		fmt.Println("\n\t\tTODO: Re-implement address mining stats in console")
+		for _, day := range dayStatsTX {
+			fmt.Printf("\t%s%s%s%s\n",
+				StringSpaced(day.Day, " ", 24),
+				StringSpaced(fmt.Sprintf("%.2f", day.CoinCount), " ", 35),
+				StringSpaced(fmt.Sprintf("%.2f", day.CoinsPerHour), " ", 12),
+				StringSpaced(fmt.Sprintf("%.2f", day.WinPercent), " ", 12))
+		}
+		fmt.Printf("\n\t%s\n",
+			StringSpaced(fmt.Sprintf("Projected Coins Today: %s", overallInfoTX.Projection), " ", 40))
+
+	} else {
+		setColor(WarnCol)
+		fmt.Printf("\n\n\t\t\t\t\tNo Receiving Address Statistics Available\n\n")
 	}
 
 }
