@@ -30,30 +30,21 @@ In order to set this up, there are only a few things you need to do:
 2. Make sure you are using a version of `DynMiner2.exe` that supports reporting.
    I have included a version built from the Foundation 2.05 in this repo for
    Windows. You will need to ensure that you use the `dyn_miner2.cl` that is
-   included with it as well.
-3. You will likely need to open the port in your firewall that you configure
-   the dmo-monitor to use. The default is 11235 If you want to access it from
+   included with it as well. All the newest 2.06 builds from the Dynamo Foundation will also work.
+3. You will likely need to open the port in your firewall ont the computer that is going to be running
+   dmo-monitor to use it. The default port is `11235`. If you want to access it from
    outside your local network (away from home), then you will need to forward that
    port on your router to the machine that is running dmo-monitor as well.
-
-## Telegram notification setup
-
-You can receive realtime notifications when your miners go offline via telegram.
-To set this up simply:
-* Message /start to @dmo_monitor_bot
-* Message /start to @userinfobot to get your telegram user id
-* Put your telegram user id in myconfig.yaml
 
 
 ## Usage
 
 1. Once you have setup `myconfig.yaml`, you can simply run dmo-monitor in a console
-   window. It uses ANSI codes for formatting, so I recommend you use a terminal
-   application that supports them, but it is not required. You can run the
+   window to run the monitoring application. You *can* run the
    dmo-monitor without setting up your miners or anything else, but at that
    point it won't start reporting anything.
-2. When you run your `DynMiner2.exe` program you will just need to pass 2
-   additional command line options in order to connect to the dmo-monitor: The
+2. When you run your `DynMiner2.exe` program to start your miner you will need to pass 2
+   additional command line options in order to connect it to dmo-monitor: The
    URL for your monitoring program and a 'vanity name' to display in the
    monitor, eg these are the two additional parameters to add to your
    `DynMiner2.exe` line: `-statrpcurl http://123.456.789.111:11235/minerstats
@@ -82,18 +73,27 @@ If you want to access it from outside your house, you will need to have
 forwarded the port on your router and then you would access it using the IP
 address assigned by your ISP.
 
+
+## Telegram notification setup
+
+You can receive realtime notifications when your miners go offline via telegram.
+To set this up simply:
+* Message /start to @dmo_monitor_bot
+* Message /start to @userinfobot to get your telegram user id
+* Put your telegram user id in myconfig.yaml
+
+
 ## NOTES
 
-Displaying Wallet Statistics:
+Displaying Receiving Address Statistics:
 
-If you want to display statistics on your mining wallets, the WalletsToMonitor will need to be Wallet Names that are setup on 
-the full node you are mining against. There is no support for pool mining for these statistics yet. 
-There is no support for using receiving addresses yet either.
+If you want to display statistics on your coins mined, the AddrsToMonitor will need to be the receiving addresses that you are mining to.
+Pool mining is not supported for these statistics
 
 IF ALL YOU WANT TO DO IS MONITOR YOUR ACTIVE MINERS and their hashrates, submits, rejects and accepts, 
-then you should just leave the WalletsToMonitor config option BLANK like:
+then you should just leave the AddrsToMonitor config option blank.
 ```
-WalletsToMonitor: 
+AddrsToMonitor: 
 ```
 
 ## Compiling
