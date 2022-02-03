@@ -19,7 +19,7 @@ type conf struct {
 	AuthToken          string  `yaml:"AuthToken"`
 }
 
-func (c *conf) getConf() *conf {
+func (myConfig *conf) getConf() *conf {
 	myConfigFile := "config.yaml"
 	if _, err := os.Stat("myconfig.yaml"); err == nil {
 		myConfigFile = "myconfig.yaml"
@@ -29,10 +29,10 @@ func (c *conf) getConf() *conf {
 	if err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
 	}
-	err = yaml.Unmarshal(yamlFile, c)
+	err = yaml.Unmarshal(yamlFile, myConfig)
 	if err != nil {
 		log.Fatalf("Unmarshal: %v", err)
 	}
 
-	return c
+	return myConfig
 }

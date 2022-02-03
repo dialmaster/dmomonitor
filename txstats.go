@@ -93,7 +93,7 @@ func txStats() {
 	myTime := time.Now()
 	_, myTzOffset := myTime.Zone()
 
-	var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","Addresses":"` + c.AddrsToMonitor + `", "TZOffset": ` + strconv.Itoa(myTzOffset) + `, "NumDays": ` + strconv.Itoa(c.DailyStatDays) + `}`)
+	var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","Addresses":"` + myConfig.AddrsToMonitor + `", "TZOffset": ` + strconv.Itoa(myTzOffset) + `, "NumDays": ` + strconv.Itoa(myConfig.DailyStatDays) + `}`)
 	req, err := http.NewRequest("GET", reqUrl.String(), data)
 	if err != nil {
 		return

@@ -6,79 +6,149 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"log"
+	"io/fs"
+	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-)
 
-//TODO: Restore console output, code cleanup.
+	"github.com/gin-gonic/gin"
+)
 
 var versionString = "v1.2.0"
 
 //go:embed templates/**
 var tmplFS embed.FS
 
-//go:embed js/**
-var jsFS embed.FS
+//go:embed static/**
+var staticFS embed.FS
 
-//go:embed img/**
-var imgFS embed.FS
-
-var c conf
+var myConfig conf
 var minerList = make(map[string]mineRpc)
 var progStartTime = time.Now()
 var mutex = &sync.Mutex{}
 var totalHashG = ""
-var walletStats = ""
-var walletBalance = ""
 var currentPricePerDMO = 0.0
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
 
-	c.getConf()
-	if c.QuietMode {
-		fmt.Printf("Starting monitor in quiet mode (no console output). Access stats at http://localhost:%s/stats\n", c.ServerPort)
+	// Comment this line out (and set quiet mode) to enable gin console logging
+	gin.DefaultWriter = ioutil.Discard
+
+	router := gin.Default()
+
+	myConfig.getConf()
+	if myConfig.QuietMode {
+		fmt.Printf("Starting monitor in quiet mode (no console output). Access stats at http://localhost:%s/stats\n", myConfig.ServerPort)
 	}
 
-	if c.MinerLateTime < 20 {
-		c.MinerLateTime = 20
+	if myConfig.MinerLateTime < 20 {
+		myConfig.MinerLateTime = 20
 	}
-	if c.DailyStatDays < 2 {
-		c.DailyStatDays = 3
+	if myConfig.DailyStatDays < 2 {
+		myConfig.DailyStatDays = 3
 	}
 	// Don't let people get too nuts here
-	if c.DailyStatDays > 21 {
-		c.DailyStatDays = 21
+	if myConfig.DailyStatDays > 21 {
+		myConfig.DailyStatDays = 21
 	}
-	if c.AutoRefreshSeconds < 10 && c.AutoRefreshSeconds > 0 {
-		c.AutoRefreshSeconds = 10
+	if myConfig.AutoRefreshSeconds < 10 && myConfig.AutoRefreshSeconds > 0 {
+		myConfig.AutoRefreshSeconds = 10
 	}
 
-	if len(c.AddrsToMonitor) > 0 {
+	if len(myConfig.AddrsToMonitor) > 0 {
 		txStats()
 	}
 
 	go func() {
 		for {
 			getCoinGeckoDMOPrice()
-			if len(c.AddrsToMonitor) > 0 {
+			if len(myConfig.AddrsToMonitor) > 0 {
 				txStats()
 			}
 
 			updateMinerStatus()
-			if !c.QuietMode {
+			if !myConfig.QuietMode {
 				consoleOutput()
 			}
 			time.Sleep(10 * time.Second)
 		}
 	}()
-	handleRequests()
+
+	router.StaticFS("/static", myStaticFS())
+	router.GET("/stats", statsPage)
+	router.POST("/minerstats", getMinerStatsRPC)
+
+	templ := template.Must(template.New("").ParseFS(tmplFS, "templates/*.html"))
+	router.SetHTMLTemplate(templ)
+
+	router.POST("/removeminer", removeLateMiner)
+
+	router.Run(":" + myConfig.ServerPort)
+
+}
+
+func statsPage(c *gin.Context) {
+	type pageVars struct {
+		Uptime             string
+		MinerList          map[string]mineRpc
+		Totalhash          string
+		Totalminers        int
+		WalletOverallStats OverallInfoTX
+		WalletDailyStats   []DayStatTX
+		WalletHourlyStats  []HourStatTX
+		AutoRefresh        int
+		DailyStatDays      int
+		VersionString      string
+		CurrentPrice       float64
+		DollarsPerDay      float64
+		DollarsPerWeek     float64
+		DollarsPerMonth    float64
+		NetHash            string
+	}
+
+	var pVars pageVars
+
+	for _, stats := range minerList {
+		if !stats.Late {
+			pVars.Totalminers += 1
+		}
+	}
+
+	pVars.NetHash = overallInfoTX.NetHash
+
+	pVars.CurrentPrice = currentPricePerDMO
+	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay
+	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 7
+	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 30
+	pVars.VersionString = versionString
+	pVars.MinerList = minerList
+	pVars.Totalhash = totalHashG
+	pVars.WalletOverallStats = overallInfoTX
+	pVars.WalletDailyStats = dayStatsTX
+	pVars.WalletHourlyStats = hourStatsTX
+	pVars.AutoRefresh = myConfig.AutoRefreshSeconds
+	pVars.DailyStatDays = myConfig.DailyStatDays
+
+	pVars.Uptime = time.Since(progStartTime).Round(time.Second).String()
+
+	c.HTML(http.StatusOK, "stats.html", pVars)
+
+}
+
+func myStaticFS() http.FileSystem {
+	sub, err := fs.Sub(staticFS, "static")
+
+	if err != nil {
+		panic(err)
+	}
+
+	return http.FS(sub)
 }
 
 // https://api.coingecko.com/api/v3/simple/price?ids=dynamo-coin&vs_currencies=USD
@@ -120,7 +190,7 @@ func getCoinGeckoDMOPrice() {
 
 func sendOfflineNotificationToTelegram(minerName string) {
 	params := url.Values{}
-	params.Add("chat_id", c.TelegramUserId)
+	params.Add("chat_id", myConfig.TelegramUserId)
 	params.Add("text", "Your miner '"+minerName+"' is offline")
 	body := strings.NewReader(params.Encode())
 
@@ -139,63 +209,6 @@ func sendOfflineNotificationToTelegram(minerName string) {
 	defer resp.Body.Close()
 }
 
-func statsPage(w http.ResponseWriter, r *http.Request) {
-	fp := path.Join("templates", "stats.html")
-
-	type pageVars struct {
-		Uptime             string
-		MinerList          map[string]mineRpc
-		Totalhash          string
-		Totalminers        int
-		WalletOverallStats OverallInfoTX
-		WalletDailyStats   []DayStatTX
-		WalletHourlyStats  []HourStatTX
-		AutoRefresh        int
-		DailyStatDays      int
-		VersionString      string
-		CurrentPrice       float64
-		DollarsPerDay      float64
-		DollarsPerWeek     float64
-		DollarsPerMonth    float64
-		NetHash            string
-	}
-
-	var pVars pageVars
-
-	for _, stats := range minerList {
-		if !stats.Late {
-			pVars.Totalminers += 1
-		}
-	}
-
-	pVars.NetHash = overallInfoTX.NetHash
-	pVars.CurrentPrice = currentPricePerDMO
-	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay
-	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 7
-	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 30
-	pVars.VersionString = versionString
-	pVars.MinerList = minerList
-	pVars.Totalhash = totalHashG
-	pVars.WalletOverallStats = overallInfoTX
-	pVars.WalletDailyStats = dayStatsTX
-	pVars.WalletHourlyStats = hourStatsTX
-	pVars.AutoRefresh = c.AutoRefreshSeconds
-	pVars.DailyStatDays = c.DailyStatDays
-
-	pVars.Uptime = time.Now().Sub(progStartTime).Round(time.Second).String()
-
-	tmpl, err := template.ParseFS(tmplFS, fp)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err := tmpl.Execute(w, pVars); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-}
-
 type mineRpc struct {
 	Name        string
 	Hashrate    int
@@ -208,12 +221,11 @@ type mineRpc struct {
 	HowLate     string
 }
 
-func getMinerStatsRPC(rw http.ResponseWriter, req *http.Request) {
-	decoder := json.NewDecoder(req.Body)
+func getMinerStatsRPC(c *gin.Context) {
 	var thisStat mineRpc
-	err := decoder.Decode(&thisStat)
-	if err != nil {
-		panic(err)
+	if err := c.BindJSON(&thisStat); err != nil {
+		fmt.Printf("Got unhandled (bad) request!")
+		return
 	}
 
 	thisStat.HashrateStr = formatHashNum(thisStat.Hashrate)
@@ -223,26 +235,12 @@ func getMinerStatsRPC(rw http.ResponseWriter, req *http.Request) {
 	mutex.Unlock()
 }
 
-func removeLateMiner(rw http.ResponseWriter, req *http.Request) {
-	minerName := req.URL.Query().Get("minerName")
+func removeLateMiner(c *gin.Context) {
+	minerName := c.Query("minerName")
 	// Do not allow removal of active miners
 	if minerList[minerName].Late {
 		delete(minerList, minerName)
 	}
-}
-
-func handleRequests() {
-	http.HandleFunc("/stats", statsPage)
-	http.HandleFunc("/minerstats", getMinerStatsRPC)
-	http.HandleFunc("/removeminer", removeLateMiner)
-	http.Handle("/js/",
-		http.StripPrefix("", http.FileServer(http.FS(jsFS))))
-
-	http.Handle("/img/",
-		http.StripPrefix("", http.FileServer(http.FS(imgFS))))
-
-	log.Fatal(http.ListenAndServe(":"+c.ServerPort, nil))
-
 }
 
 func StringSpaced(text string, spacingchar string, numspaces int) string {
@@ -286,15 +284,15 @@ func updateMinerStatus() {
 			mutex.Lock()
 			minerList[name] = stats
 			mutex.Unlock()
-			if howLong.Seconds() > c.MinerLateTime && stats.Late == false {
+			if howLong.Seconds() > myConfig.MinerLateTime && stats.Late == false {
 				stats.Late = true
 				mutex.Lock()
 				minerList[name] = stats
 				mutex.Unlock()
-				if len(c.TelegramUserId) > 0 {
+				if len(myConfig.TelegramUserId) > 0 {
 					sendOfflineNotificationToTelegram(name)
 				}
-			} else if howLong.Seconds() <= c.MinerLateTime {
+			} else if howLong.Seconds() <= myConfig.MinerLateTime {
 				stats.Late = false
 				mutex.Lock()
 				minerList[name] = stats
@@ -417,12 +415,12 @@ func consoleOutput() {
 		setColor(H3Col)
 	}
 
-	if c.AddrsToMonitor != "" {
+	if myConfig.AddrsToMonitor != "" {
 
 		setColor(H1Col)
 		fmt.Printf("\n\n\t\t\t\t\tAddress Mining Stats for Address(es)\n")
 		setColor(H2Col)
-		fmt.Printf("\n\t\t\t\tDaily Statistics (Last %d Days)\n", c.DailyStatDays)
+		fmt.Printf("\n\t\t\t\tDaily Statistics (Last %d Days)\n", myConfig.DailyStatDays)
 		fmt.Printf("\t%s%s%s%s\n",
 			StringSpaced("Day", " ", 24),
 			StringSpaced("Coins", " ", 35),
