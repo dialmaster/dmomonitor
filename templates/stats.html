@@ -13,15 +13,22 @@
         <style>
           body {
             margin: 0;
-	    font-family: source sans pro,arial,sans-serif;
-	  }
+	          font-family: source sans pro,arial,sans-serif;
+            background-color: #e0e6f0;
+      	  }
+          .page-title {
+            font-weight: normal;
+          }
           .page-header {
-            background-color: #ACE;
+            background-color: #f0f6ff;
             height: 70px;
-            border-bottom: 2px solid black;
+            border-bottom: 1px solid #777;
             position: fixed;
             width: 100%;
             top: 0;
+            -moz-box-shadow: 3px 3px 5px 6px #b7c7d7;
+            -webkit-box-shadow: 3px 3px 5px 6px #b7c7d7;
+            box-shadow: 3px 3px 5px 6px #b7c7d7;
           }
           .page-container {
             max-width: 1000px;
@@ -154,8 +161,8 @@
       <body data-Timer="{{.AutoRefresh}}">
         <center>
           <div class="page-header">
-            <div class="uptime">Uptime: {{.Uptime}}</div>
-            <h2 class="page-title">DMO-Monitor <span class="version-string">{{.VersionString}}</span></h2>
+            {{if .Uptime }}<div class="uptime">Uptime: {{.Uptime}}</div>{{ end }}
+            <h2 class="page-title">{{.PageTitle}} {{if .VersionString}}<span class="version-string">{{.VersionString}}</span>{{end}}</h2>
             {{if .AutoRefresh}}<div class="refresh-countdown"><span>Last Refresh: </span><span id="my-timer"></span></div>{{end}}
           </div>
 

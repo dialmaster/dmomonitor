@@ -82,6 +82,7 @@ func main() {
 
 	router.StaticFS("/static", myStaticFS())
 	router.GET("/stats", statsPage)
+	//router.GET("/", landingPage) // For management/website only
 	router.POST("/minerstats", getMinerStatsRPC)
 
 	templ := template.Must(template.New("").ParseFS(tmplFS, "templates/*.html"))
@@ -93,24 +94,32 @@ func main() {
 
 }
 
+type pageVars struct {
+	Uptime             string
+	MinerList          map[string]mineRpc
+	Totalhash          string
+	Totalminers        int
+	WalletOverallStats OverallInfoTX
+	WalletDailyStats   []DayStatTX
+	WalletHourlyStats  []HourStatTX
+	AutoRefresh        int
+	DailyStatDays      int
+	VersionString      string
+	CurrentPrice       float64
+	DollarsPerDay      float64
+	DollarsPerWeek     float64
+	DollarsPerMonth    float64
+	NetHash            string
+	PageTitle          string
+}
+
+func landingPage(c *gin.Context) {
+	var pVars pageVars
+	pVars.PageTitle = "DMO Monitor and Management"
+	c.HTML(http.StatusOK, "landing.html", pVars)
+}
+
 func statsPage(c *gin.Context) {
-	type pageVars struct {
-		Uptime             string
-		MinerList          map[string]mineRpc
-		Totalhash          string
-		Totalminers        int
-		WalletOverallStats OverallInfoTX
-		WalletDailyStats   []DayStatTX
-		WalletHourlyStats  []HourStatTX
-		AutoRefresh        int
-		DailyStatDays      int
-		VersionString      string
-		CurrentPrice       float64
-		DollarsPerDay      float64
-		DollarsPerWeek     float64
-		DollarsPerMonth    float64
-		NetHash            string
-	}
 
 	var pVars pageVars
 
@@ -120,6 +129,7 @@ func statsPage(c *gin.Context) {
 		}
 	}
 
+	pVars.PageTitle = "DMO Monitor"
 	pVars.NetHash = overallInfoTX.NetHash
 
 	pVars.CurrentPrice = currentPricePerDMO
