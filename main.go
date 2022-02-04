@@ -1,82 +1,169 @@
 package main
 
 import (
-	"bytes"
 	"embed"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
-	"log"
+	"io/fs"
+	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
-var versionString = "v1.1.0"
+var versionString = "v1.2.0"
 
 //go:embed templates/**
 var tmplFS embed.FS
 
-//go:embed js/**
-var jsFS embed.FS
+//go:embed static/**
+var staticFS embed.FS
 
-//go:embed img/**
-var imgFS embed.FS
-
-var c conf
+var myConfig conf
 var minerList = make(map[string]mineRpc)
 var progStartTime = time.Now()
 var mutex = &sync.Mutex{}
 var totalHashG = ""
-var walletStats = ""
-var walletBalance = ""
 var currentPricePerDMO = 0.0
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
 
-	c.getConf()
-	if c.QuietMode {
-		fmt.Printf("Starting monitor in quiet mode (no console output). Access stats at http://localhost:%s/stats\n", c.ServerPort)
+	// Comment this line out (and set quiet mode) to enable gin console logging
+	gin.DefaultWriter = ioutil.Discard
+
+	router := gin.Default()
+
+	myConfig.getConf()
+	if myConfig.QuietMode {
+		fmt.Printf("Starting monitor in quiet mode (no console output). Access stats at http://localhost:%s/stats\n", myConfig.ServerPort)
 	}
 
-	if c.MinerLateTime < 15 {
-		c.MinerLateTime = 15
+	if myConfig.MinerLateTime < 20 {
+		myConfig.MinerLateTime = 20
 	}
-	if c.DailyStatDays < 2 {
-		c.DailyStatDays = 4
+	if myConfig.DailyStatDays < 2 {
+		myConfig.DailyStatDays = 3
 	}
 	// Don't let people get too nuts here
-	if c.DailyStatDays > 21 {
-		c.DailyStatDays = 21
+	if myConfig.DailyStatDays > 21 {
+		myConfig.DailyStatDays = 21
+	}
+	if myConfig.AutoRefreshSeconds < 10 && myConfig.AutoRefreshSeconds > 0 {
+		myConfig.AutoRefreshSeconds = 10
+	}
+
+	if len(myConfig.AddrsToMonitor) > 0 {
+		txStats()
 	}
 
 	go func() {
 		for {
-			var tmpCurrentPricePerDMO = getCoinGeckoDMOPrice()
-			if tmpCurrentPricePerDMO > 0.0 {
-				currentPricePerDMO = tmpCurrentPricePerDMO
-			}
-			if len(c.WalletsToMonitor) > 0 && c.NodeIP != "XXX.XXX.XXX.XXX" {
-				walletStats = txStats()
-				walletBalance = getWalletsBalance(c.WalletsToMonitor)
+			getCoinGeckoDMOPrice()
+			if len(myConfig.AddrsToMonitor) > 0 {
+				txStats()
 			}
 
-			updateMinerStatusAndConsoleOutput()
-			time.Sleep(6 * time.Second)
+			updateMinerStatus()
+			if !myConfig.QuietMode {
+				consoleOutput()
+			}
+			time.Sleep(10 * time.Second)
 		}
 	}()
-	handleRequests()
+
+	router.StaticFS("/static", myStaticFS())
+	router.GET("/stats", statsPage)
+	//router.GET("/", landingPage) // For management/website only
+	router.POST("/minerstats", getMinerStatsRPC)
+
+	templ := template.Must(template.New("").ParseFS(tmplFS, "templates/*.html"))
+	router.SetHTMLTemplate(templ)
+
+	router.POST("/removeminer", removeLateMiner)
+
+	router.Run(":" + myConfig.ServerPort)
+
+}
+
+type pageVars struct {
+	Uptime             string
+	MinerList          map[string]mineRpc
+	Totalhash          string
+	Totalminers        int
+	WalletOverallStats OverallInfoTX
+	WalletDailyStats   []DayStatTX
+	WalletHourlyStats  []HourStatTX
+	AutoRefresh        int
+	DailyStatDays      int
+	VersionString      string
+	CurrentPrice       float64
+	DollarsPerDay      float64
+	DollarsPerWeek     float64
+	DollarsPerMonth    float64
+	NetHash            string
+	PageTitle          string
+}
+
+func landingPage(c *gin.Context) {
+	var pVars pageVars
+	pVars.PageTitle = "DMO Monitor and Management"
+	c.HTML(http.StatusOK, "landing.html", pVars)
+}
+
+func statsPage(c *gin.Context) {
+
+	var pVars pageVars
+
+	for _, stats := range minerList {
+		if !stats.Late {
+			pVars.Totalminers += 1
+		}
+	}
+
+	pVars.PageTitle = "DMO Monitor"
+	pVars.NetHash = overallInfoTX.NetHash
+
+	pVars.CurrentPrice = currentPricePerDMO
+	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay
+	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 7
+	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 30
+	pVars.VersionString = versionString
+	pVars.MinerList = minerList
+	pVars.Totalhash = totalHashG
+	pVars.WalletOverallStats = overallInfoTX
+	pVars.WalletDailyStats = dayStatsTX
+	pVars.WalletHourlyStats = hourStatsTX
+	pVars.AutoRefresh = myConfig.AutoRefreshSeconds
+	pVars.DailyStatDays = myConfig.DailyStatDays
+
+	pVars.Uptime = time.Since(progStartTime).Round(time.Second).String()
+
+	c.HTML(http.StatusOK, "stats.html", pVars)
+
+}
+
+func myStaticFS() http.FileSystem {
+	sub, err := fs.Sub(staticFS, "static")
+
+	if err != nil {
+		panic(err)
+	}
+
+	return http.FS(sub)
 }
 
 // https://api.coingecko.com/api/v3/simple/price?ids=dynamo-coin&vs_currencies=USD
-func getCoinGeckoDMOPrice() float64 {
-	myPrice := 0.11
+func getCoinGeckoDMOPrice() {
+
 	client := &http.Client{}
 	reqUrl := url.URL{
 		Scheme: "http",
@@ -95,26 +182,25 @@ func getCoinGeckoDMOPrice() float64 {
 	resp, err := client.Do(req)
 	// Sometimes the coingecko api call fails, and we do not want that to kill our app...
 	if err != nil {
-		//log.Fatal(err)
-		return 0.0
+		return
 	}
 	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
 
 	var myGeckoPrice geckoPrice
 
 	if err := json.Unmarshal(bodyText, &myGeckoPrice); err != nil {
-		//log.Fatal(err)
-		return 0.0
+		return
 	}
 
-	myPrice = myGeckoPrice.DynamoCoin.Usd
-	return myPrice
-
+	currentPricePerDMO = myGeckoPrice.DynamoCoin.Usd
 }
 
 func sendOfflineNotificationToTelegram(minerName string) {
 	params := url.Values{}
-	params.Add("chat_id", c.TelegramUserId)
+	params.Add("chat_id", myConfig.TelegramUserId)
 	params.Add("text", "Your miner '"+minerName+"' is offline")
 	body := strings.NewReader(params.Encode())
 
@@ -133,105 +219,6 @@ func sendOfflineNotificationToTelegram(minerName string) {
 	defer resp.Body.Close()
 }
 
-func getWalletsBalance(walletNames string) string {
-	walletBalanceTotal := 0.0000
-
-	type walletResp struct {
-		Balance float64 `json:"result"`
-		ID      string  `json:"id"`
-	}
-
-	var wallets = strings.Split(walletNames, ",")
-
-	for _, w := range wallets {
-		var thisWallet = strings.TrimSpace(w)
-
-		client := &http.Client{}
-		reqUrl := url.URL{
-			Scheme: "http",
-			Host:   c.NodeIP + ":" + c.NodePort,
-			Path:   "wallet/" + thisWallet,
-		}
-
-		var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","method":"getbalance"}`)
-
-		req, err := http.NewRequest("POST", reqUrl.String(), data)
-		req.SetBasicAuth(c.NodeUser, c.NodePass)
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Fatal(err)
-			return "Unable to make request to wallet: " + err.Error()
-		}
-		bodyText, err := io.ReadAll(resp.Body)
-
-		var myWalletBalance walletResp
-
-		if err := json.Unmarshal(bodyText, &myWalletBalance); err != nil {
-			return "Unable to decode json from wallet request: " + err.Error()
-		}
-
-		walletBalanceTotal += myWalletBalance.Balance
-	}
-
-	return fmt.Sprintf("%.3f", walletBalanceTotal)
-}
-
-func statsPage(w http.ResponseWriter, r *http.Request) {
-	fp := path.Join("templates", "stats.html")
-
-	type pageVars struct {
-		Uptime             string
-		MinerList          map[string]mineRpc
-		Totalhash          string
-		Totalminers        int
-		Walletbalance      string
-		WalletOverallStats OverallInfoTX
-		WalletDailyStats   []DayStatTX
-		WalletHourlyStats  []HourStatTX
-		AutoRefresh        int
-		DailyStatDays      int
-		VersionString      string
-		CurrentPrice       float64
-		DollarsPerDay      float64
-		DollarsPerWeek     float64
-		DollarsPerMonth    float64
-	}
-
-	var pVars pageVars
-
-	for _, stats := range minerList {
-		if !stats.Late {
-			pVars.Totalminers += 1
-		}
-	}
-	pVars.CurrentPrice = currentPricePerDMO
-	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay
-	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 7
-	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 30
-	pVars.VersionString = versionString
-	pVars.MinerList = minerList
-	pVars.Totalhash = totalHashG
-	pVars.Walletbalance = walletBalance
-	pVars.WalletOverallStats = overallInfoTX
-	pVars.WalletDailyStats = dayStatsTX
-	pVars.WalletHourlyStats = hourStatsTX
-	pVars.AutoRefresh = c.AutoRefreshSeconds
-	pVars.DailyStatDays = c.DailyStatDays
-
-	pVars.Uptime = time.Now().Sub(progStartTime).Round(time.Second).String()
-
-	tmpl, err := template.ParseFS(tmplFS, fp)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err := tmpl.Execute(w, pVars); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-}
-
 type mineRpc struct {
 	Name        string
 	Hashrate    int
@@ -244,12 +231,11 @@ type mineRpc struct {
 	HowLate     string
 }
 
-func getMinerStatsRPC(rw http.ResponseWriter, req *http.Request) {
-	decoder := json.NewDecoder(req.Body)
+func getMinerStatsRPC(c *gin.Context) {
 	var thisStat mineRpc
-	err := decoder.Decode(&thisStat)
-	if err != nil {
-		panic(err)
+	if err := c.BindJSON(&thisStat); err != nil {
+		fmt.Printf("Got unhandled (bad) request!")
+		return
 	}
 
 	thisStat.HashrateStr = formatHashNum(thisStat.Hashrate)
@@ -259,94 +245,13 @@ func getMinerStatsRPC(rw http.ResponseWriter, req *http.Request) {
 	mutex.Unlock()
 }
 
-func removeLateMiner(rw http.ResponseWriter, req *http.Request) {
-	minerName := req.URL.Query().Get("minerName")
+func removeLateMiner(c *gin.Context) {
+	minerName := c.Query("minerName")
 	// Do not allow removal of active miners
 	if minerList[minerName].Late {
 		delete(minerList, minerName)
 	}
 }
-
-func handleRequests() {
-	http.HandleFunc("/stats", statsPage)
-	http.HandleFunc("/minerstats", getMinerStatsRPC)
-	http.HandleFunc("/removeminer", removeLateMiner)
-	http.Handle("/js/",
-		http.StripPrefix("", http.FileServer(http.FS(jsFS))))
-
-	http.Handle("/img/",
-		http.StripPrefix("", http.FileServer(http.FS(imgFS))))
-
-    // Management related requests will require Bearer token
-	http.HandleFunc("/getminersettings", grant(getMinerSettingsRPC))
-
-	log.Fatal(http.ListenAndServe(":"+c.ServerPort, nil))
-
-}
-
-
-func grant(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
-	return func(rw http.ResponseWriter, req *http.Request) {
-
-
-		reqToken := req.Header.Get("Authorization")
-		splitToken := strings.Split(reqToken, "Bearer ")
-		bearerToken := splitToken[1]
-
-		if (bearerToken != c.AuthToken) {
-			rw.WriteHeader(http.StatusUnauthorized)
-			rw.Header().Set("Content-Type", "application/json")
-			resp := make(map[string]string)
-			resp["message"] = "Token Invalid"
-			jsonResp, err := json.Marshal(resp)
-			if err != nil {
-				log.Fatalf("Error happened in JSON marshal. Err: %s", err)
-			}
-			rw.Write(jsonResp)
-			return
-		}
-		fn(rw, req)
-	}
-}
-
-
-// Caller asks for settings for it's miner, we give back settings if we have any, or an empty response
-func getMinerSettingsRPC(rw http.ResponseWriter, req *http.Request) {
-	type minerConfig struct {
-		NodeUrl string
-		NodeUser string
-		NodePass string
-		WalletAddr string
-		MinerOpts string
-		RespawnSeconds int
-	}
-
-	minerName := req.URL.Query().Get("minerName")
-	fmt.Printf("getting settings for miner %s", minerName)
-
-	var thisMinerConfig minerConfig
-	reqUrl := url.URL{
-		Scheme: "http",
-		Host:   c.NodeIP + ":" + c.NodePort,
-	}
-	thisMinerConfig.NodeUrl = reqUrl.String()
-	thisMinerConfig.NodeUser = c.NodeUser
-	thisMinerConfig.NodePass = c.NodePass
-	thisMinerConfig.WalletAddr = "" // Put a receiving addr here
-	thisMinerConfig.MinerOpts = "GPU,2048,4,0,0" // Just an example
-	thisMinerConfig.RespawnSeconds = 69
-	
-	jsonResp, err := json.Marshal(thisMinerConfig)
-	if err != nil {
-		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
-	}
-
-	rw.WriteHeader(http.StatusOK)
-	rw.Header().Set("Content-Type", "application/json")
-	
-	rw.Write(jsonResp)
-}
-
 
 func StringSpaced(text string, spacingchar string, numspaces int) string {
 	numpads := numspaces - len(text)
@@ -372,28 +277,8 @@ func formatHashNum(hashrate int) string {
 	return strconv.Itoa(hashrate) // Meh, it'll hopefully be a while before we exceed 999GH... if so just return the raw hash
 }
 
-// TODO: Break out logic and console display into separate functions...
-func updateMinerStatusAndConsoleOutput() {
-
-	if !c.QuietMode {
-		fmt.Print("\033[H\033[2J") // Clear screen
-		setColor(colorWhite)
-		fmt.Printf("\t\t\t\tDMO-Monitor %s\n\n", versionString)
-
-		setColor(colorYellow)
-		fmt.Printf("\t%s%s%s%s%s%s\n",
-			StringSpaced("Miner Name", " ", 24),
-			StringSpaced("Last Reported", " ", 35),
-			StringSpaced("Hashrate", " ", 12),
-			StringSpaced("Submitted", " ", 12),
-			StringSpaced("Accepted", " ", 12),
-			StringSpaced("Rejected", " ", 12))
-	}
-	warnings := ""
+func updateMinerStatus() {
 	if len(minerList) > 0 {
-		if !c.QuietMode {
-			setColor(colorGreen)
-		}
 		names := make([]string, 0)
 		for name, _ := range minerList {
 			names = append(names, name)
@@ -409,70 +294,180 @@ func updateMinerStatusAndConsoleOutput() {
 			mutex.Lock()
 			minerList[name] = stats
 			mutex.Unlock()
-			if howLong.Seconds() > c.MinerLateTime && stats.Late == false {
+			if howLong.Seconds() > myConfig.MinerLateTime && stats.Late == false {
 				stats.Late = true
 				mutex.Lock()
 				minerList[name] = stats
 				mutex.Unlock()
-				if len(c.TelegramUserId) > 0 {
+				if len(myConfig.TelegramUserId) > 0 {
 					sendOfflineNotificationToTelegram(name)
 				}
-			} else if howLong.Seconds() <= c.MinerLateTime {
+			} else if howLong.Seconds() <= myConfig.MinerLateTime {
 				stats.Late = false
 				mutex.Lock()
 				minerList[name] = stats
 				mutex.Unlock()
 				totalHash += stats.Hashrate
-				if !c.QuietMode {
-					setColor(colorGreen)
-				}
-			}
-
-			if stats.Late {
-				warnings += "\n\tWARN: " + name + " has not reported in " + howLong.String() + "\n"
-				if !c.QuietMode {
-					setColor(colorRed)
-				}
-			}
-
-			if !c.QuietMode {
-				fmt.Printf("\t%s%s%s%s%s%s\n",
-					StringSpaced(name, " ", 24),
-					StringSpaced(stats.LastReport.Format("2006-01-02 15:04:05"), " ", 35),
-					StringSpaced(stats.HashrateStr, " ", 12),
-					StringSpaced(strconv.Itoa(stats.Submit), " ", 12),
-					StringSpaced(strconv.Itoa(stats.Accept), " ", 12),
-					strconv.Itoa(stats.Reject),
-				)
-				setColor(colorGreen)
 			}
 		}
 		totalHashG = formatHashNum(totalHash)
-		if !c.QuietMode {
-			fmt.Printf("\n\tTotal Miners: %d", len(minerList))
-			fmt.Printf("\n\tTotal Hashrate: %s", totalHashG)
+	}
+
+	nDays := len(addrStats.DailyStats)
+	overallInfoTX.CurrentCoinsPerDay = addrStats.DailyStats[nDays-2].Coins
+	overallInfoTX.Projection = fmt.Sprintf("%.1f", addrStats.ProjectedCoinsToday)
+	overallInfoTX.NetHash = formatHashNum(int(addrStats.NetHash))
+
+	// Daily Average is the Average of the average of all days except today...
+	tmpCoins := 0.0
+	tmpPerc := 0.0
+	dayStatsTX = nil
+	for i := 0; i < nDays; i++ {
+
+		var thisDay DayStatTX
+		thisDay.Day = addrStats.DailyStats[i].Day
+		thisDay.CoinCount = addrStats.DailyStats[i].Coins
+		thisDay.WinPercent = addrStats.DailyStats[i].WinPercent
+		thisDay.CoinsPerHour = thisDay.CoinCount / 24.0
+
+		if i < (nDays - 1) {
+			tmpCoins += addrStats.DailyStats[i].Coins
+			tmpPerc += addrStats.DailyStats[i].WinPercent
+		} else {
+			thisDay.CoinsPerHour = addrStats.ProjectedCoinsToday / 24.0
 		}
+
+		dayStatsTX = append(dayStatsTX, thisDay)
+
+	}
+	overallInfoTX.DailyAverage = tmpCoins / (float64(nDays) - 1.0)
+	overallInfoTX.HourlyAverage = overallInfoTX.DailyAverage / 24.0
+	overallInfoTX.WinPercent = tmpPerc / (float64(nDays) - 1.0)
+
+	nHours := len(addrStats.HourlyStats)
+
+	hourStatsTX = nil
+	for j := 0; j < nHours; j++ {
+		var thisHour HourStatTX
+		thisHour.Hour = addrStats.HourlyStats[j].Hour
+		thisHour.CoinCount = float64(addrStats.HourlyStats[j].Coins)
+		thisHour.CoinsPerMinute = float64(addrStats.HourlyStats[j].Coins) * (1.0 / 60.0)
+		hourStatsTX = append(hourStatsTX, thisHour)
+	}
+
+}
+
+// TODO: Add console output back in
+func consoleOutput() {
+
+	var H1Col = colorBrightCyan
+	var H2Col = colorBrightGreen
+	var H3Col = colorBrightBlue
+	var WarnCol = colorRed
+
+	fmt.Print("\033[H\033[2J") // Clear screen
+	setColor(colorBrightWhite)
+	fmt.Printf("\t\t\t\t\t\tDMO-Monitor %s\n\n", versionString)
+
+	setColor(H1Col)
+	fmt.Printf("\t\t\t\t\tMiner Monitoring Stats\n\n")
+
+	setColor(H2Col)
+	fmt.Printf("\t%s%s%s%s%s%s\n",
+		StringSpaced("Miner Name", " ", 24),
+		StringSpaced("Last Reported", " ", 35),
+		StringSpaced("Hashrate", " ", 12),
+		StringSpaced("Submitted", " ", 12),
+		StringSpaced("Accepted", " ", 12),
+		StringSpaced("Rejected", " ", 12))
+
+	warnings := ""
+	if len(minerList) > 0 {
+		setColor(H3Col)
+		names := make([]string, 0)
+		for name, _ := range minerList {
+			names = append(names, name)
+		}
+
+		sort.Strings(names)
+
+		for _, name := range names {
+			stats := minerList[name]
+			setColor(H3Col)
+
+			if stats.Late {
+				warnings += "\n\tWARN: " + name + " has not reported in " + stats.HowLate + "\n"
+				setColor(WarnCol)
+			}
+
+			fmt.Printf("\t%s%s%s%s%s%s\n",
+				StringSpaced(name, " ", 24),
+				StringSpaced(stats.LastReport.Format("2006-01-02 15:04:05"), " ", 35),
+				StringSpaced(stats.HashrateStr, " ", 12),
+				StringSpaced(strconv.Itoa(stats.Submit), " ", 12),
+				StringSpaced(strconv.Itoa(stats.Accept), " ", 12),
+				strconv.Itoa(stats.Reject),
+			)
+			setColor(H3Col)
+		}
+
+		fmt.Printf("\n\t%s%s\n",
+			StringSpaced(fmt.Sprintf("Total Miners: %d", len(minerList)), " ", 32),
+			StringSpaced(fmt.Sprintf("Total Hashrate: %s", totalHashG), " ", 32))
 	} else {
-		if !c.QuietMode {
-			setColor(colorRed)
-			fmt.Printf("\t\t\t\tNo active miners\n")
-		}
+		setColor(WarnCol)
+		fmt.Printf("\t\t\t\tNo active miners\n")
 	}
 
-	if len(warnings) > 0 && !c.QuietMode {
-		setColor(colorRed)
+	if len(warnings) > 0 {
+		setColor(WarnCol)
 		fmt.Printf(warnings)
-		setColor(colorGreen)
+		setColor(H3Col)
 	}
 
-	if c.WalletsToMonitor != "MyExampleWalletName1,MyExampleWalletName2" && len(c.WalletsToMonitor) > 0 && !c.QuietMode {
-		fmt.Printf("\n\tWallets Combined Balance (%s): %s\n", c.WalletsToMonitor, walletBalance)
+	if myConfig.AddrsToMonitor != "" {
 
-		fmt.Printf("\n\n\n")
-		setColor(colorYellow)
-		fmt.Printf("\t\t\t\tWallet Mining Stats for Wallets: %s\n", c.WalletsToMonitor)
-		setColor(colorGreen)
+		setColor(H1Col)
+		fmt.Printf("\n\n\t\t\t\t\tAddress Mining Stats for Address(es)\n")
+		setColor(H2Col)
+		fmt.Printf("\n\t\t\t\tDaily Statistics (Last %d Days)\n", myConfig.DailyStatDays)
+		fmt.Printf("\t%s%s%s%s\n",
+			StringSpaced("Day", " ", 24),
+			StringSpaced("Coins", " ", 35),
+			StringSpaced("Coins/Hr", " ", 12),
+			StringSpaced("Win Percent", " ", 12))
+		setColor(H3Col)
 
-		fmt.Println(walletStats)
+		for _, day := range dayStatsTX {
+			fmt.Printf("\t%s%s%s%s\n",
+				StringSpaced(day.Day, " ", 24),
+				StringSpaced(fmt.Sprintf("%.2f", day.CoinCount), " ", 35),
+				StringSpaced(fmt.Sprintf("%.2f", day.CoinsPerHour), " ", 12),
+				StringSpaced(fmt.Sprintf("%.2f", day.WinPercent), " ", 12))
+		}
+
+		setColor(H2Col)
+		fmt.Printf("\n\t\t\t\tTodays Hourly Statistics\n")
+		fmt.Printf("\t%s%s%s\n",
+			StringSpaced("Hour", " ", 24),
+			StringSpaced("Coins", " ", 35),
+			StringSpaced("Coins/Min", " ", 12))
+
+		setColor(H3Col)
+
+		for _, hour := range hourStatsTX {
+			fmt.Printf("\t%s%s%s\n",
+				StringSpaced(fmt.Sprintf("%d", hour.Hour), " ", 24),
+				StringSpaced(fmt.Sprintf("%.2f", hour.CoinCount), " ", 35),
+				StringSpaced(fmt.Sprintf("%.2f", hour.CoinsPerMinute), " ", 12))
+		}
+
+		fmt.Printf("\n\t%s\n",
+			StringSpaced(fmt.Sprintf("Projected Coins Today: %s", overallInfoTX.Projection), " ", 40))
+
+	} else {
+		setColor(WarnCol)
+		fmt.Printf("\n\n\t\t\t\t\tNo Receiving Address Statistics Available\n\n")
 	}
+
 }

@@ -1,18 +1,15 @@
 package main
 
 import (
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"gopkg.in/yaml.v2"
 )
 
 type conf struct {
-	NodeIP             string  `yaml:"NodeIP"`
-	NodePort           string  `yaml:"NodePort"`
-	NodeUser           string  `yaml:"NodeUser"`
-	NodePass           string  `yaml:"NodePass"`
-	WalletsToMonitor   string  `yaml:"WalletsToMonitor"`
+	AddrsToMonitor     string  `yaml:"AddrsToMonitor"`
 	ServerPort         string  `yaml:"ServerPort"`
 	TelegramUserId     string  `yaml:"TelegramUserId"`
 	MinerLateTime      float64 `yaml:"MinerLateTime"`
@@ -22,7 +19,7 @@ type conf struct {
 	AuthToken          string  `yaml:"AuthToken"`
 }
 
-func (c *conf) getConf() *conf {
+func (myConfig *conf) getConf() *conf {
 	myConfigFile := "config.yaml"
 	if _, err := os.Stat("myconfig.yaml"); err == nil {
 		myConfigFile = "myconfig.yaml"
@@ -32,10 +29,10 @@ func (c *conf) getConf() *conf {
 	if err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
 	}
-	err = yaml.Unmarshal(yamlFile, c)
+	err = yaml.Unmarshal(yamlFile, myConfig)
 	if err != nil {
 		log.Fatalf("Unmarshal: %v", err)
 	}
 
-	return c
+	return myConfig
 }
