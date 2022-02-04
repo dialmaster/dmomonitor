@@ -13,11 +13,12 @@
         <style>
           body {
             margin: 0;
-	          font-family: source sans pro,arial,sans-serif;
+            font-family: source sans pro,arial,sans-serif;
             background-color: #e0e6f0;
       	  }
           .page-title {
             font-weight: normal;
+	    font-size: 26px;
           }
           .page-header {
             background-color: #f0f6ff;
@@ -32,6 +33,9 @@
           }
           .page-container {
             max-width: 1000px;
+	    margin-top: 100px;
+	    font-size: 22px;
+	    line-height: 30px;
           }
           .styled-table {
             border-collapse: collapse;
@@ -88,6 +92,9 @@
           }
 
           @media screen and (max-device-width: 600px) {
+            .page-container {
+	    	line-height: 40px
+	    }
             .uptime {
               font-size: 2.2vw;
             }
@@ -114,8 +121,8 @@
               font-size: 3vw;
             }
             .page-title {
-              font-size: 6vw;
-              margin-top: 0;
+              font-size: 42px;
+              margin-top: 12px;
             }
             .page-subtitle {
               margin-top: 5px;
@@ -167,10 +174,10 @@
           </div>
 
         <div class="page-container">
-          <div class="coming-soon-text">Dynamo (DMO) Mining Monitor and Management System - Coming Soon</div>
-                <div class="current-projects">In the meantime, check out the free to use <a href="https://github.com/dialmaster/dmo-monitor-binaries">DMO Mining Monitor</a></div>
+		<div class="coming-soon-text">Coming Soon:<br>Dynamo Mining Monitor and Management System</div>
+		<div class="current-projects">In the meantime, check out the free to use <br><a href="https://github.com/dialmaster/dmo-monitor-binaries">DMO Mining Monitor</a></div>
                 <br>
-                <div> Please submit any questions, bug reports, or feature requests to:<br> <a href="mailto:cdial@dmo-monitor.com">cdial@dmo-monitor.com</a> </div>
+                <div> Please submit any questions, bug reports, or feature requests to: <a href="mailto:cdial@dmo-monitor.com">cdial@dmo-monitor.com</a> </div>
         </div>
       </center>
 

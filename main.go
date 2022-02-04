@@ -7,7 +7,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
-	"io/ioutil"
+//	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sort"
@@ -38,7 +38,7 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 
 	// Comment this line out (and set quiet mode) to enable gin console logging
-	gin.DefaultWriter = ioutil.Discard
+	//gin.DefaultWriter = ioutil.Discard
 
 	router := gin.Default()
 
@@ -65,7 +65,7 @@ func main() {
 		txStats()
 	}
 
-	go func() {
+/*	go func() {
 		for {
 			getCoinGeckoDMOPrice()
 			if len(myConfig.AddrsToMonitor) > 0 {
@@ -78,17 +78,17 @@ func main() {
 			}
 			time.Sleep(10 * time.Second)
 		}
-	}()
+	}() */
 
 	router.StaticFS("/static", myStaticFS())
-	router.GET("/stats", statsPage)
-	//router.GET("/", landingPage) // For management/website only
-	router.POST("/minerstats", getMinerStatsRPC)
+//	router.GET("/stats", statsPage)
+	router.GET("/", landingPage) // For management/website only
+//	router.POST("/minerstats", getMinerStatsRPC)
 
 	templ := template.Must(template.New("").ParseFS(tmplFS, "templates/*.html"))
 	router.SetHTMLTemplate(templ)
 
-	router.POST("/removeminer", removeLateMiner)
+//	router.POST("/removeminer", removeLateMiner)
 
 	router.Run(":" + myConfig.ServerPort)
 
