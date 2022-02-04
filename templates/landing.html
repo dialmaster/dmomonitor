@@ -16,9 +16,39 @@
             font-family: source sans pro,arial,sans-serif;
             background-color: #e0e6f0;
       	  }
+
+          .contact-now {
+            font-size: 22px;
+            margin-top: 25px;
+          }
+          .free-miner-info-container {
+            display: inline-block;
+            margin: 15px;
+          }
+
+          .coming-soon-container {
+            float: left;
+            height: auto;
+            text-align: left;
+            margin: 15px;
+          }
+          .free-app-info {
+            padding: 0px;
+            width: 660px;
+            float: right;
+            text-align: left;
+            margin-left: 15px;
+            margin-top: 15px;
+          }
+          .free-app-screenshot {
+            width: 285px;
+            float: left;
+            height: auto;
+          }
+
           .page-title {
             font-weight: normal;
-	    font-size: 26px;
+	          font-size: 26px;
           }
           .page-header {
             background-color: #f0f6ff;
@@ -33,56 +63,9 @@
           }
           .page-container {
             max-width: 1000px;
-	    margin-top: 100px;
-	    font-size: 22px;
-	    line-height: 30px;
-          }
-          .styled-table {
-            border-collapse: collapse;
-            margin: 25px 0;
-            font-size: 0.9em;
-            font-family: sans-serif;
-            min-width: 800px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-          }
-          .wallet-info {
-              font-size: 2vw;
-              white-space: pre;
-          }
-          .table-button {
-            background-color: #A33;
-            border: 1px solid black;
-            cursor: pointer;
-          }
-
-          .late-miner-info {
-            color: red;
-          }
-
-          .version-string {
-            font-size: 1vw;
-          }
-
-          .miners-container {
-            margin-top: 90px;
-          }
-          .uptime {
-            left: 8;
-            top: 8;
-            position:absolute;
-            margin-top:10px;
-            margin-left: 10px;
-          }
-
-          .refresh-countdown {
-            right: 8;
-            top: 8;
-            position: absolute;
-            margin-top:10px;
-            margin-right: 10px;
-          }
-          .note {
-            text-align: center;
+      	    margin-top: 100px;
+	          font-size: 22px;
+      	    line-height: 30px;
           }
 
           @media screen and (min-device-width: 600px) {
@@ -93,17 +76,10 @@
 
           @media screen and (max-device-width: 600px) {
             .page-container {
-	    	line-height: 40px
-	    }
-            .uptime {
-              font-size: 2.2vw;
-            }
-            .refresh-countdown {
-              font-size: 2.2vw;
-            }
-            
-            .version-string {
-              font-size: 2.2vw;
+	    	      line-height: 40px
+	          }
+            .free-app-info {
+              width: 635px;
             }
 
             .hidden-mobile {
@@ -113,13 +89,10 @@
             .body {
               width: 100%;
             }
-            .note {
-              font-size: 2.3vw;
+            .contact-now {
+              font-size: 26px;
             }
-            .styled-table {
-              min-width: 90%;
-              font-size: 3vw;
-            }
+
             .page-title {
               font-size: 42px;
               margin-top: 12px;
@@ -128,39 +101,6 @@
               margin-top: 5px;
               font-size: 4vw;
             }
-            .wallet-info {
-              font-size: 2.5vw;
-            }
-            .wallet-balance {
-              font-size: 3vw;
-            }
-          }
-
-
-          .styled-table tbody tr.warn {
-            background-color: #911 !important
-          }
-          .styled-table thead tr {
-            background-color: #009879;
-            color: #ffffff;
-            text-align: left;
-          }
-          .styled-table th,
-          .styled-table td {
-            padding: 12px 15px;
-          }
-          .styled-table tbody tr {
-            border-bottom: 1px solid #dddddd;
-          }
-
-          .styled-table tbody tr:nth-of-type(even) {
-            background-color: #f3f3f3;
-          }
-
-          .styled-table tbody tr:last-of-type {
-            border-bottom: 2px solid #009879;
-            background-color: #888;
-            font-weight: bold;
           }
         </style>
       </head>
@@ -168,59 +108,47 @@
       <body data-Timer="{{.AutoRefresh}}">
         <center>
           <div class="page-header">
-            {{if .Uptime }}<div class="uptime">Uptime: {{.Uptime}}</div>{{ end }}
-            <h2 class="page-title">{{.PageTitle}} {{if .VersionString}}<span class="version-string">{{.VersionString}}</span>{{end}}</h2>
-            {{if .AutoRefresh}}<div class="refresh-countdown"><span>Last Refresh: </span><span id="my-timer"></span></div>{{end}}
+            
+            <h2 class="page-title">{{.PageTitle}}</h2>
+            
           </div>
 
           <div class="page-container">
 
-            <div style="
-                display: inline-block;
-                margin-bottom: 15px;
-            ">
-            <img class="free_app_screenshot" src="/static/img/free-app-screenshot.png" alt="Screenshot of free DMO Monitor" style="
-                width: 30%;
-                float: left;
-                height: auto;
-            ">
-            
-                <div class="free-app-info" style="
-                padding: 0px;
-                width: 69%;
-                float: right;
-                text-align: left;
-                margin-left: 10px;
-            ">
+            <div class="free-miner-info-container">
+              <img class="free-app-screenshot" src="/static/img/free-app-screenshot.png" alt="Screenshot of free DMO Monitor">
+              <div class="free-app-info">
                 The always free-to-use DMO Monitor application can be run as a local application and provides:
-            <ul>
-            <li>Monitoring of your miners and their hashrates</li>
-            <li>Notifications if a miner goes offline, via Telegram</li>
-            <li>Display of mining statistics such as coins per day, coins per hour</li>
-            <li>Native apps for both Windows and Linux</li>
-            </ul>
+                <ul>
+                  <li>Monitoring of your miners and their hashrates</li>
+                  <li>Notifications if a miner goes offline, via Telegram</li>
+                  <li>Display of mining statistics such as coins per day, coins per hour</li>
+                  <li>Native apps for both Windows and Linux</li>
+                </ul>
             
-                The free app is already available on <a href="https://github.com/dialmaster/dmo-monitor-binaries">Github</a>
-                </div>
+                <center><a href="https://github.com/dialmaster/dmo-monitor-binaries">Get the free app now</a></center>
+              </div>
             </div>
             
             <hr>
 
-<div style="margin-top: 25px;text-align: left;">
-            <span><b><center>Coming Soon! </center></b></span><br>
-            Dynamo Mining Monitor and Management System
-            
-            This new version coming soon will include all the free features with the additional ability to
-            manage via a web management console, in concert with an upcoming miner 'wrapping' utility:
-            <ul>
-            <li>Your miner configurations</li>
-            <li>Starting, stopping, or restarting your miners r</li>
-            <li>Deploying new versions of the DynMiner executable and .cl</li>
-            </ul>
+            <div class="coming-soon-container">
+              <span><b><center>Coming Soon</center></b></span><br>
+              Dynamo Full Mining Management System:
+              <br />
+              The new version, in development now, will include all the free features with the additional ability to
+              manage via a web management console, in concert with an upcoming miner 'wrapping' utility:
+              <ul>
+                <li>Your miner configurations</li>
+                <li>Starting, stopping, or restarting your miners</li>
+                <li>Deploying new versions of the DynMiner executable and .cl</li>
+              </ul>
             </div>
-                            
-            Please submit any questions, bug reports, or feature requests to: <a href="mailto:cdial@dmo-monitor.com">cdial@dmo-monitor.com</a> 
+            <hr>
+            <div class="contact-now">
+              Please submit any questions, bug reports, or feature requests to:<br /> <a href="mailto:cdial@dmo-monitor.com">cdial@dmo-monitor.com</a> 
             </div>
+          </div>
 
         </center>
 
