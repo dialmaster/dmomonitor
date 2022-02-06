@@ -6,8 +6,9 @@
 <link rel="icon" type="image/png" sizes="192x192"  href="static/img/android-chrome-192x192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="static/img/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="static/img/favicon-16x16.png">
-<link rel="manifest" href="static/img/site.webmanifest">
-        <script src="static/js/app.js"></script>
+<link rel="manifest" href="/static/img/site.webmanifest">
+<link href="/static/lightbox.min.css" rel="stylesheet" />
+        
         <meta name="mobile-web-app-capable" content="yes">
         <title>DMO-Monitor</title>
         <style>
@@ -20,6 +21,10 @@
           .contact-now {
             font-size: 22px;
             margin-top: 25px;
+            width:100%;
+            position:fixed;
+            bottom:50px;
+            left:0;
           }
           .free-miner-info-container {
             display: inline-block;
@@ -75,14 +80,15 @@
 
           @media screen and (max-device-width: 600px) {
             .coming-soon-container {
-              font-size: 14px;
-              margin: 0px 20px 0px 20px;
+              font-size: 13px;
+              margin: 0px 30px 0px 30px;
             }
             .page-container {
 	    	      line-height: 40px
 	          }
             .free-app-info {
               width: 635px;
+              font-size: 24px;
             }
 
             .hidden-mobile {
@@ -119,10 +125,12 @@
           <div class="page-container">
 
             <div class="free-miner-info-container">
-              <img class="free-app-screenshot" src="/static/img/free-app-screenshot.png" alt="Screenshot of free DMO Monitor">
+              <a href="/static/img/free-app-screenshot.png" data-lightbox="free-app-screenshot">
+                <img class="free-app-screenshot" src="/static/img/free-app-screenshot.png" alt="Screenshot of free DMO Monitor">
+              </a>
               <div class="free-app-info">
                 <center><h3>DMO Monitor Free</h3></center>
-                The always free-to-use DMO Monitor application can be run as a local application and provides the following 
+                The always free-to-use DMO Monitor is run as a local application and provides the following
                 functionality for <a href="http://dynamocoin.org">Dynamo</a> mining:
                 <ul>
                   <li>Monitoring of your miners and their hashrates</li>
@@ -138,25 +146,27 @@
             <hr>
 
             <div class="coming-soon-container">
-              <center><h3>Coming Soon</h3></center>
-              <h4>Dynamo Full Mining Management System:</h4>
-              
+              <center><h3>Coming Soon</h3>
+              <h4>Dynamo Full Mining Management System</h4>
+              </center>
               The new version, in development now, will include all the free features above. It will also work in concert with a mining wrapper utility that will make running your miners easier. 
-              Using the wrapper program, you will be able to manage the following things via a web management console hosted here:
+              Using the wrapper program, you will be able to manage the following via a web management console:
               <ul>
                 <li>Your miner configurations</li>
                 <li>Starting, stopping, or restarting your miners</li>
                 <li>Deploying new versions of the DynMiner executable and .cl</li>
               </ul>
             </div>
-            <hr>
+            
+            
             <div class="contact-now">
+              <hr>
               Please submit any questions, bug reports, or feature requests to:<br /> <a href="mailto:cdial@dmo-monitor.com">cdial@dmo-monitor.com</a> 
             </div>
           </div>
 
         </center>
-
+        <script src="/static/js/lightbox-plus-jquery.min.js"></script>
       </body>
     </html>
 
