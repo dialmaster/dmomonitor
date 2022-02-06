@@ -104,6 +104,16 @@ body {
   }
 
   @media screen and (max-device-width: 600px) {
+    .lb-data .lb-close {
+        height: 48px !important;
+        width: 48px !important;
+        background-size: contain !important;
+        position: fixed !important;
+        top: 4px !important;
+        right: 4px !important;
+      }
+    
+
     #sidenav {
       width: 40%;
       font-size: 36px;
