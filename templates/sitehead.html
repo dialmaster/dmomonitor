@@ -1,5 +1,4 @@
-{{define "head"}}
-<head>
+{{define "sitehead"}}
     {{if .AutoRefresh}} <meta http-equiv="refresh" content="{{.AutoRefresh}}" />{{end}}
     <link rel="apple-touch-icon" sizes="180x180" href="static/img/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="512x512"  href="static/img/android-chrome-512x512.png">
@@ -7,10 +6,8 @@
     <link rel="icon" type="image/png" sizes="32x32" href="static/img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="static/img/favicon-16x16.png">
     <link rel="manifest" href="/static/img/site.webmanifest">
-    <link href="/static/lightbox.min.css" rel="stylesheet" />
-    <link href="/static/main.css" rel="stylesheet" />
+    <link href="/static/css/lightbox.min.css" rel="stylesheet" />
+    <link href="/static/css/main.css" rel="stylesheet" />
     <meta name="mobile-web-app-capable" content="yes">
     <title>DMO-Monitor</title>
-</head>
-
 {{end}}

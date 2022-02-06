@@ -1,0 +1,27 @@
+.wallet-info {
+    font-size: 2vw;
+    white-space: pre;
+}
+.late-miner-info {
+  color: red;
+}
+.miners-container {
+    margin-top: 90px;
+  }
+  .note {
+    text-align: center;
+  }
+
+  @media screen and (min-device-width: 600px) {
+  .wallet-info {
+    font-size: 2.5vw;
+  }
+  .wallet-balance {
+    font-size: 3vw;
+  }
+  .note {
+    font-size: 12px;
+  }
+
+}
+

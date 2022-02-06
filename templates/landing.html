@@ -1,5 +1,8 @@
     <html>
-      {{template "head" .}}
+      <head>
+      {{template "sitehead" .}}
+      <link href="/static/css/landing.css" rel="stylesheet" />
+      </head>
       <body data-Timer="{{.AutoRefresh}}">
           {{template "header" .}}
 

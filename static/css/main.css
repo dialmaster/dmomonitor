@@ -1,9 +1,69 @@
 body {
     background-color: #000000;
-    background-image: linear-gradient(315deg, #111 0%, #7f8c8d 74%);
+    background-image: linear-gradient(315deg, #333 0%, #7f8c8d 74%);
     margin: 0;
     font-family: source sans pro,arial,sans-serif;
     }
+
+    .styled-table {
+      border-collapse: collapse;
+      margin: 25px 0;
+      font-size: 0.9em;
+      font-family: sans-serif;
+      min-width: 800px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    }
+    .table-button {
+      background-color: #A33;
+      border: 1px solid black;
+      cursor: pointer;
+    }
+
+    .styled-table tbody tr.warn {
+      background-color: #911 !important
+    }
+    .styled-table thead tr {
+      background-color: #009879;
+      color: #ffffff;
+      text-align: left;
+    }
+    .styled-table th,
+    .styled-table td {
+      padding: 12px 15px;
+    }
+    .styled-table tbody tr {
+      border-bottom: 1px solid #dddddd;
+    }
+
+    .styled-table tbody tr:nth-of-type(even) {
+      background-color: #f3f3f3;
+    }
+
+    .styled-table tbody tr:last-of-type {
+      border-bottom: 2px solid #009879;
+      background-color: #888;
+      font-weight: bold;
+    }
+
+    .uptime {
+      left: 8;
+      top: 8;
+      position:absolute;
+      margin-top:10px;
+      margin-left: 10px;
+    }
+
+    .refresh-countdown {
+      right: 8;
+      top: 8;
+      position: absolute;
+      margin-top:10px;
+      margin-right: 10px;
+    }
+    .version-string {
+      font-size: 1vw;
+    }
+
   hr {
     background-color: #AAA;
     height: 1px;
@@ -46,29 +106,7 @@ body {
     text-align: center;
     z-index: 12;
   }
-  .free-miner-info-container {
-    display: inline-block;
-    margin: 15px;
-  }
-
-  .coming-soon-container {
-    float: left;
-    height: auto;
-    text-align: left;
-    margin: 0px 15px 0px 15px;
-  }
-  .free-app-info {
-    padding: 0px;
-    width: 660px;
-    float: right;
-    text-align: left;
-    margin-left: 15px;
-  }
-  .free-app-screenshot {
-    width: 285px;
-    float: left;
-    height: auto;
-  }
+ 
 
   .page-title {
     font-weight: normal;
@@ -104,6 +142,16 @@ body {
   }
 
   @media screen and (max-device-width: 600px) {
+    .uptime {
+      font-size: 2.2vw;
+    }
+    .refresh-countdown {
+      font-size: 2.2vw;
+    }
+    
+    .version-string {
+      font-size: 2.2vw;
+    }
     .lb-data .lb-close {
         height: 48px !important;
         width: 48px !important;
@@ -119,17 +167,9 @@ body {
       font-size: 36px;
       line-height: 70px;
     }
-    .coming-soon-container {
-      font-size: 13px;
-      margin: 0px 30px 0px 30px;
-    }
     .page-container {
           line-height: 40px
       }
-    .free-app-info {
-      width: 635px;
-      font-size: 24px;
-    }
 
     .hidden-mobile {
       display: none;
@@ -150,4 +190,9 @@ body {
       margin-top: 5px;
       font-size: 4vw;
     }
+    .styled-table {
+      min-width: 90%;
+      font-size: 3vw;
+    }
+
   }
