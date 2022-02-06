@@ -1,178 +1,21 @@
     <html>
       <head>
         {{if .AutoRefresh}} <meta http-equiv="refresh" content="{{.AutoRefresh}}" />{{end}}
-<link rel="apple-touch-icon" sizes="180x180" href="static/img/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="512x512"  href="static/img/android-chrome-512x512.png">
-<link rel="icon" type="image/png" sizes="192x192"  href="static/img/android-chrome-192x192.png">
-<link rel="icon" type="image/png" sizes="32x32" href="static/img/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="static/img/favicon-16x16.png">
-<link rel="manifest" href="/static/img/site.webmanifest">
-<link href="/static/lightbox.min.css" rel="stylesheet" />
-        
+        <link rel="apple-touch-icon" sizes="180x180" href="static/img/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="512x512"  href="static/img/android-chrome-512x512.png">
+        <link rel="icon" type="image/png" sizes="192x192"  href="static/img/android-chrome-192x192.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="static/img/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="static/img/favicon-16x16.png">
+        <link rel="manifest" href="/static/img/site.webmanifest">
+        <link href="/static/lightbox.min.css" rel="stylesheet" />
+        <link href="/static/main.css" rel="stylesheet" />
         <meta name="mobile-web-app-capable" content="yes">
         <title>DMO-Monitor</title>
-        <style>
-          body {
-            background-color: #000000;
-            background-image: linear-gradient(315deg, #111 0%, #7f8c8d 74%);
-            margin: 0;
-            font-family: source sans pro,arial,sans-serif;
-      	  }
-          hr {
-            background-color: #AAA;
-            height: 1px;
-            border: none;
-          }
-
-          .hamburger {
-            position: fixed;
-            top: 10px;
-            left: 20px;
-            display: none;
-          }
-          #sidenav {
-            position: fixed;
-            left: 0;
-            top: 0;
-            background-color: #888;
-            height: calc(100vh - 77px);
-            width: 240px;
-            z-index: 10;
-            border-right: 1px solid black;
-            list-style-type: none;
-            display: none;
-            font-size: 20px;
-            line-height: 42px;
-          }
-          
-
-          .footer {
-            font-size: 22px;
-            margin-top: 25px;
-            width:100%;
-            position:fixed;
-            bottom:0;
-            padding-bottom:12px;
-            padding-top:12px;
-            left:0;
-            background-color: #444;
-            border-top: 1px solid #777;
-            text-align: center;
-            z-index: 12;
-          }
-          .free-miner-info-container {
-            display: inline-block;
-            margin: 15px;
-          }
-
-          .coming-soon-container {
-            float: left;
-            height: auto;
-            text-align: left;
-            margin: 0px 15px 0px 15px;
-          }
-          .free-app-info {
-            padding: 0px;
-            width: 660px;
-            float: right;
-            text-align: left;
-            margin-left: 15px;
-          }
-          .free-app-screenshot {
-            width: 285px;
-            float: left;
-            height: auto;
-          }
-
-          .page-title {
-            font-weight: normal;
-	          font-size: 26px;
-          }
-          .page-header {
-            text-align: center;
-            background-color: #5b6467;
-            background-image: linear-gradient(315deg, #5b6467 0%, #8b939a 74%);
-            height: 70px;
-            border-bottom: 1px solid #777;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            -moz-box-shadow: 3px 3px 5px 6px #555;
-            -webkit-box-shadow: 3px 3px 5px 6px #555;
-            box-shadow: 3px 3px 5px 6px #555;
-          }
-          .page-container {
-            margin-left: auto;
-            margin-right: auto;
-            max-width: 1000px;
-      	    margin-top: 100px;
-	          font-size: 22px;
-      	    line-height: 30px;
-            padding-bottom:475px;
-          }
-
-          @media screen and (min-device-width: 600px) {
-            .hidden-pc {
-              display: none;
-            }
-          }
-
-          @media screen and (max-device-width: 600px) {
-            #sidenav {
-              width: 40%;
-              font-size: 36px;
-              line-height: 70px;
-            }
-            .coming-soon-container {
-              font-size: 13px;
-              margin: 0px 30px 0px 30px;
-            }
-            .page-container {
-	    	      line-height: 40px
-	          }
-            .free-app-info {
-              width: 635px;
-              font-size: 24px;
-            }
-
-            .hidden-mobile {
-              display: none;
-            }
-
-            .body {
-              width: 100%;
-            }
-            .footer {
-              font-size: 26px;
-            }
-
-            .page-title {
-              font-size: 42px;
-              margin-top: 12px;
-            }
-            .page-subtitle {
-              margin-top: 5px;
-              font-size: 4vw;
-            }
-          }
-        </style>
       </head>
       <body data-Timer="{{.AutoRefresh}}">
-          <div class="page-header">
-            <img class="hamburger" src="/static/img/hamburger.png"></img>
-            <h2 class="page-title">{{.PageTitle}}</h2>
-          </div>
+          {{template "header" .}}
 
-
-          <div id="sidenav">
-            <ul>
-              <li>Some sidenav item</li>
-              <li>Some sidenav item</li>
-              <li>Some sidenav item</li>
-              <li>Some sidenav item</li>
-            </ul>
-          </div>
-
+          {{template "sidenav" .}}
 
           <div class="page-container">
             <div class="free-miner-info-container">
@@ -210,10 +53,7 @@
           </div>
 
 
-          <div class="footer">
-            Please submit any questions, bug reports, or feature requests to:<br /> <a href="mailto:cdial@dmo-monitor.com">cdial@dmo-monitor.com</a> 
-          </div>
-
+          {{template "footer" .}}
         <script src="/static/js/lightbox-plus-jquery.min.js"></script>
       </body>
     </html>
