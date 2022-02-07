@@ -1,3 +1,4 @@
 *.exe
 myconfig.yaml
 release/
+dmo-monitor
