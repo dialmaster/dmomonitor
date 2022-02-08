@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var versionString = "v1.2.0"
@@ -27,6 +29,9 @@ var tmplFS embed.FS
 
 //go:embed static/**
 var staticFS embed.FS
+
+var db *sql.DB
+var dbErr error
 
 var myConfig conf
 var minerList = make(map[string]mineRpc)
@@ -47,6 +52,15 @@ func main() {
 	if myConfig.QuietMode {
 		fmt.Printf("Starting monitor in quiet mode (no console output). Access stats at http://localhost:%s/stats\n", myConfig.ServerPort)
 	}
+
+	db, dbErr = sql.Open("mysql", myConfig.DBUser+":"+myConfig.DBPass+"@tcp("+myConfig.DBIP+":"+myConfig.DBPort+")/"+myConfig.DBName)
+
+	// Truly a fatal error.
+	if dbErr != nil {
+		panic(dbErr.Error())
+	}
+	defer db.Close()
+	fmt.Printf("Connected to DB: %s\n", myConfig.DBName)
 
 	if myConfig.MinerLateTime < 20 {
 		myConfig.MinerLateTime = 20

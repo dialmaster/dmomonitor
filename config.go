@@ -17,6 +17,11 @@ type conf struct {
 	DailyStatDays      int     `yaml:"DailyStatDays"`
 	QuietMode          bool    `yaml:"QuietMode"`
 	AuthToken          string  `yaml:"AuthToken"`
+	DBUser             string  `yaml:"DBUser"`
+	DBPass             string  `yaml:"DBPass"`
+	DBIP               string  `yaml:"DBIP"`
+	DBPort             string  `yaml:"DBPort"`
+	DBName             string  `yaml:"DBName"`
 }
 
 func (myConfig *conf) getConf() *conf {
