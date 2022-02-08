@@ -1,0 +1,67 @@
+.page-container.stats {
+  padding-bottom: 125px;
+}
+
+.wallet-info {
+    font-size: 2vw;
+    white-space: pre;
+}
+.late-miner-info {
+  color: red;
+}
+.miners-container {
+    margin-top: 90px;
+  }
+  .note {
+    text-align: center;
+  }
+
+  @media screen and (max-device-width: 600px) {
+    .version-string {
+      font-size: 2.2vw;
+    }
+
+    .hidden-mobile {
+      display: none;
+    }
+    .body {
+      width: 100%;
+    }
+    .note {
+      font-size: 2.3vw;
+    }
+    .styled-table {
+      min-width: 90%;
+      font-size: 3vw;
+    }
+    .page-title {
+      font-size: 6vw;
+      margin-top: 0;
+    }
+    .page-subtitle {
+      margin-top: 5px;
+      font-size: 4vw;
+    }
+    .wallet-info {
+      font-size: 2.5vw;
+    }
+    .wallet-balance {
+      font-size: 3vw;
+    }
+  }
+
+
+
+  @media screen and (min-device-width: 600px) {
+    .wallet-info {
+      font-size: 2.5vw;
+    }
+    .wallet-balance {
+      font-size: 3vw;
+    }
+    .note {
+      font-size: 18px;
+    }
+
+  }
+
