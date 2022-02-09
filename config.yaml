@@ -2,12 +2,15 @@
   # The port THIS dmo-monitor will use on this computer. 
 ServerPort: 11235
 
-## Set these to your DB connection info:
+## Set these to your DB connection info: (management version only)
 DBUser: username
 DBPass: password
 DBPort: 3306
 DBName: DBNAME
 DBIP: 127.0.0.1
+# Bearer token for management requests. NOT CURRENTLY USED
+AuthToken: 
+## END management version only section
 
   #### END REQUIRED PARAMS
 
@@ -40,5 +43,3 @@ AddrsToMonitor:
   # Set to true to disable most console output
 QuietMode: false
 
-  # Bearer token for management requests. NOT CURRENTLY USED
-AuthToken: 
