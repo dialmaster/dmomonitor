@@ -2,6 +2,13 @@
   # The port THIS dmo-monitor will use on this computer. 
 ServerPort: 11235
 
+## Set these to your DB connection info:
+DBUser: username
+DBPass: password
+DBPort: 3306
+DBName: DBNAME
+DBIP: 127.0.0.1
+
   #### END REQUIRED PARAMS
 
   # The number of seconds for the webui to wait before it auto-refreshes itself

@@ -2,3 +2,4 @@
 myconfig.yaml
 release/
 dmo-monitor
+migrations/goose_up.sh
