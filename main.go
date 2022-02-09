@@ -18,7 +18,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -50,6 +53,10 @@ func main() {
 	}
 
 	router := gin.Default()
+
+	store := cookie.NewStore([]byte("secret"))
+	store.Options(sessions.Options{MaxAge: 60 * 60 * 24}) // expire in a day
+	router.Use(sessions.Sessions("mysession", store))
 
 	myConfig.getConf()
 	if myConfig.QuietMode {
@@ -102,21 +109,49 @@ func main() {
 		}()
 	}
 
+	// Anyone can access this route, and it doesn't matter what their session has in it...
 	router.StaticFS("/static", myStaticFS())
 	templ := template.Must(template.New("").ParseFS(tmplFS, "templates/*.html"))
 	router.SetHTMLTemplate(templ)
 
 	if features["COMINGSOON"] || features["MANAGEMENT"] {
-		router.GET("/", landingPage) // For management/website only
+		router.GET("/", getSessionInfo(), landingPage) // For management/website only, should be able to know about session
 	}
 
 	if features["FREE"] || features["MANAGEMENT"] {
-		router.POST("/removeminer", removeLateMiner)
-		router.GET("/stats", statsPage)
-		router.POST("/minerstats", getMinerStatsRPC)
+	        router.GET("/login", getSessionInfo(), loginPage) // login OR create new user... no auth needed for this page.
+		router.GET("/stats", statsPage) // Route that only a logged in user session should be able to access
+		router.POST("/minerstats", getMinerStatsRPC) // Route that will need a bearer token from the miner
+		router.POST("/removeminer", removeLateMiner) // Route that will need a bearer token from the miner
 	}
 
+
+
+
+
 	router.Run(":" + myConfig.ServerPort)
+}
+
+func getSessionInfo() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		fmt.Println("before middleware")
+		// Get a new cookie or set one if it does not exist:
+		session := sessions.Default(c)
+		var count int
+		v := session.Get("count")
+		if v == nil {
+			count = 0
+		} else {
+			count = v.(int)
+			count++
+		}
+		fmt.Printf("Middleware: count %d!", count)
+		session.Set("count", count)
+		session.Save()
+
+		c.Set("count_val", strconv.Itoa(count))
+		c.Next()
+	}
 }
 
 type pageVars struct {
@@ -138,9 +173,14 @@ type pageVars struct {
 	PageTitle          string
 }
 
+func loginPage(c *gin.Context) {
+}
+
 func landingPage(c *gin.Context) {
 	var pVars pageVars
 	pVars.PageTitle = "DMO Monitor and Management"
+
+	fmt.Printf("landingPage: count %s!", c.GetString("count_val"))
 	c.HTML(http.StatusOK, "landing.html", pVars)
 }
 
