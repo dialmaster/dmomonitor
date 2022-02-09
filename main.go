@@ -9,7 +9,7 @@ import (
 	"io"
 	"io/fs"
 
-	//	"io/ioutil"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sort"
@@ -21,6 +21,8 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
+
+var features = map[string]bool{}
 
 var versionString = "v1.2.0"
 
@@ -43,8 +45,9 @@ var currentPricePerDMO = 0.0
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 
-	// Comment this line out (and set quiet mode) to enable gin console logging
-	//gin.DefaultWriter = ioutil.Discard
+	if features["FREE"] { // Don't want the console filled with gin garbage on the free version
+		gin.DefaultWriter = ioutil.Discard
+	}
 
 	router := gin.Default()
 
@@ -53,14 +56,16 @@ func main() {
 		fmt.Printf("Starting monitor in quiet mode (no console output). Access stats at http://localhost:%s/stats\n", myConfig.ServerPort)
 	}
 
-	db, dbErr = sql.Open("mysql", myConfig.DBUser+":"+myConfig.DBPass+"@tcp("+myConfig.DBIP+":"+myConfig.DBPort+")/"+myConfig.DBName)
+	if features["MANAGEMENT"] {
+		db, dbErr = sql.Open("mysql", myConfig.DBUser+":"+myConfig.DBPass+"@tcp("+myConfig.DBIP+":"+myConfig.DBPort+")/"+myConfig.DBName)
 
-	// Truly a fatal error.
-	if dbErr != nil {
-		panic(dbErr.Error())
+		// Truly a fatal error.
+		if dbErr != nil {
+			panic(dbErr.Error())
+		}
+		defer db.Close()
+		fmt.Printf("Connected to DB: %s\n", myConfig.DBName)
 	}
-	defer db.Close()
-	fmt.Printf("Connected to DB: %s\n", myConfig.DBName)
 
 	if myConfig.MinerLateTime < 20 {
 		myConfig.MinerLateTime = 20
@@ -80,33 +85,38 @@ func main() {
 		txStats()
 	}
 
-	go func() {
-		for {
-			getCoinGeckoDMOPrice()
-			if len(myConfig.AddrsToMonitor) > 0 {
-				txStats()
-			}
+	if !features["COMINGSOON"] {
+		go func() {
+			for {
+				getCoinGeckoDMOPrice()
+				if len(myConfig.AddrsToMonitor) > 0 {
+					txStats()
+				}
 
-			updateMinerStatus()
-			if !myConfig.QuietMode {
-				consoleOutput()
+				updateMinerStatus()
+				if !myConfig.QuietMode {
+					consoleOutput()
+				}
+				time.Sleep(10 * time.Second)
 			}
-			time.Sleep(10 * time.Second)
-		}
-	}()
+		}()
+	}
 
 	router.StaticFS("/static", myStaticFS())
-	router.GET("/stats", statsPage)
-	router.GET("/", landingPage) // For management/website only
-	router.POST("/minerstats", getMinerStatsRPC)
-
 	templ := template.Must(template.New("").ParseFS(tmplFS, "templates/*.html"))
 	router.SetHTMLTemplate(templ)
 
-	router.POST("/removeminer", removeLateMiner)
+	if features["COMINGSOON"] || features["MANAGEMENT"] {
+		router.GET("/", landingPage) // For management/website only
+	}
+
+	if features["FREE"] || features["MANAGEMENT"] {
+		router.POST("/removeminer", removeLateMiner)
+		router.GET("/stats", statsPage)
+		router.POST("/minerstats", getMinerStatsRPC)
+	}
 
 	router.Run(":" + myConfig.ServerPort)
-
 }
 
 type pageVars struct {
