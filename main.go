@@ -1,14 +1,15 @@
 package main
 
 import (
+	"crypto/rand"
 	"database/sql"
 	"embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
-
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -72,6 +73,9 @@ func main() {
 		}
 		defer db.Close()
 		fmt.Printf("Connected to DB: %s\n", myConfig.DBName)
+
+		// TESTING ONLY
+		fmt.Printf("Cloud key example: %s\n", createCloudKey())
 	}
 
 	if myConfig.MinerLateTime < 20 {
@@ -119,17 +123,27 @@ func main() {
 	}
 
 	if features["FREE"] || features["MANAGEMENT"] {
-	        router.GET("/login", getSessionInfo(), loginPage) // login OR create new user... no auth needed for this page.
-		router.GET("/stats", statsPage) // Route that only a logged in user session should be able to access
+		router.GET("/stats", statsPage)              // Route that only a logged in user session should be able to access
 		router.POST("/minerstats", getMinerStatsRPC) // Route that will need a bearer token from the miner
 		router.POST("/removeminer", removeLateMiner) // Route that will need a bearer token from the miner
 	}
 
-
-
-
+	if features["MANAGEMENT"] {
+		router.GET("/login", getSessionInfo(), loginPage) // login OR create new user... no auth needed for this page.
+		router.POST("/login", doLogin)
+	}
 
 	router.Run(":" + myConfig.ServerPort)
+}
+
+// Hash password and look in the DB here....
+func doLogin(c *gin.Context) {
+	username := c.PostForm("uname")
+	password := c.PostForm("psw")
+
+	fmt.Printf("Posted form with username: %s and password %s\n", username, password)
+	c.Redirect(http.StatusFound, "/")
+
 }
 
 func getSessionInfo() gin.HandlerFunc {
@@ -137,19 +151,13 @@ func getSessionInfo() gin.HandlerFunc {
 		fmt.Println("before middleware")
 		// Get a new cookie or set one if it does not exist:
 		session := sessions.Default(c)
-		var count int
-		v := session.Get("count")
-		if v == nil {
-			count = 0
+		id := session.Get("ID")
+		if id == nil {
+			session.Set("guest", true)
 		} else {
-			count = v.(int)
-			count++
+			session.Set("guest", false)
 		}
-		fmt.Printf("Middleware: count %d!", count)
-		session.Set("count", count)
 		session.Save()
-
-		c.Set("count_val", strconv.Itoa(count))
 		c.Next()
 	}
 }
@@ -171,9 +179,16 @@ type pageVars struct {
 	DollarsPerMonth    float64
 	NetHash            string
 	PageTitle          string
+	Guest              bool
 }
 
 func loginPage(c *gin.Context) {
+	session := sessions.Default(c)
+	var pVars pageVars
+	pVars.PageTitle = "DMO Monitor and Management"
+	pVars.Guest = session.Get("guest").(bool)
+
+	c.HTML(http.StatusOK, "login.html", pVars)
 }
 
 func landingPage(c *gin.Context) {
@@ -535,4 +550,14 @@ func consoleOutput() {
 		fmt.Printf("\n\n\t\t\t\t\tNo Receiving Address Statistics Available\n\n")
 	}
 
+}
+
+func createCloudKey() string {
+	b := make([]byte, 40)
+	_, err := rand.Read(b)
+	if err != nil {
+		fmt.Println("Unable to generate random number for cloud key")
+		return ""
+	}
+	return base64.URLEncoding.EncodeToString(b)
 }
