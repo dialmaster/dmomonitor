@@ -1,6 +1,7 @@
 /* Bordered form */
 form {
     border: 3px solid #f1f1f1;
+    padding: 10px 20px 10px 20px;
   }
   
   /* Full-width inputs */
@@ -34,4 +35,18 @@ form {
     padding: 16px;
   }
   
+
+  @media screen and (max-device-width: 600px) {
+    .container {
+      font-size: 40px;
+    }
+    input[type=text], input[type=password], button {
+      font-size: 40px;
+      margin-bottom:24px;
+      height: 90px;
+    }
+    button {
+      height: 96px;
+    }
+  }
   

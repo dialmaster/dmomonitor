@@ -1,5 +1,6 @@
 .page-container.stats {
   padding-bottom: 125px;
+  margin-top: 125px;
 }
 
 .wallet-info {
@@ -35,8 +36,8 @@
       font-size: 3vw;
     }
     .page-title {
-      font-size: 6vw;
-      margin-top: 0;
+      font-size: 60px;
+      margin-top: 10px;
     }
     .page-subtitle {
       margin-top: 5px;

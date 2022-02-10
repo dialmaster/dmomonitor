@@ -2,11 +2,12 @@
       <head>
         {{template "sitehead" .}}
         <link href="/static/css/stats.css" rel="stylesheet" />
-        <script src="static/js/app.js"></script>
       </head>
       
       <body data-Timer="{{.AutoRefresh}}">
         {{template "header" .}}
+
+        {{template "sidenav" .}}
 
         <div class="page-container stats">
           <center>

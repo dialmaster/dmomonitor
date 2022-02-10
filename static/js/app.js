@@ -9,6 +9,27 @@ function minerOnClick(name) {
 	}
 }
 
+function hamburgerClick(ele) {
+	console.log('Hamburger!!');
+	var $hamburger = $("#hamburger");
+	var $sidenav = $("#sidenav");
+	if ($hamburger.hasClass('sidenav-hidden')) {
+		$hamburger.removeClass('sidenav-hidden');
+		$sidenav.animate({
+			left: "0",
+		  }, 300, function() {
+			$('.close_hamburger').css('display', 'block');
+		  });
+	} else {
+		$hamburger.addClass('sidenav-hidden');
+		$('.close_hamburger').css('display', 'none');
+		$sidenav.animate({
+			left: "-50%",
+		  }, 300, function() {
+		  });
+	}
+}
+
 // Countdown to page refresh
 window.onload = function exampleFunction() {
 	var timer = document.querySelector("body").dataset.timer;

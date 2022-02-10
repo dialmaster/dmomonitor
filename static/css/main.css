@@ -1,6 +1,6 @@
 body {
     background-color: #000000;
-    background-image: linear-gradient(315deg, #444 0%, #7f8c8d 74%);
+    background-image: linear-gradient(315deg, #555 0%, #8f9c9d 74%);
     margin: 0;
     font-family: source sans pro,arial,sans-serif;
     }
@@ -11,7 +11,7 @@ body {
       font-size: 0.9em;
       font-family: sans-serif;
       min-width: 800px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
     }
     .table-button {
       background-color: #A33;
@@ -74,27 +74,51 @@ body {
     border: none;
   }
 
-  .hamburger {
+  #hamburger {
     position: fixed;
     top: 10px;
     left: 20px;
     display: none;
   }
+
+  .close_hamburger {
+    display: none;
+  }
+
   #sidenav {
     position: fixed;
     left: 0;
     top: 0;
     background-color: #888;
     height: calc(100vh - 77px);
-    width: 240px;
+    width: 180px;
     z-index: 10;
     border-right: 1px solid black;
     list-style-type: none;
-    display: none;
     font-size: 20px;
     line-height: 42px;
   }
-  
+  #sidenav > ul.nav {
+    padding-left: 20px;
+  }
+  #sidenav > ul.nav > li {
+      list-style-type: none;
+  }
+
+  #sidenav > ul.nav > li > a {
+    text-decoration: none;
+    color: #224;
+  }
+  #sidenav > ul.nav > li > a:hover {
+    text-decoration: none;
+    color: #448;
+  }
+
+  div.error {
+    color: #411;
+    font-style: italic;
+  }
+
 
   .footer {
     font-size: 22px;
@@ -105,8 +129,8 @@ body {
     padding-bottom:12px;
     padding-top:12px;
     left:0;
-    background-color: #444;
-    border-top: 1px solid #777;
+    background-color: #666;
+    border-top: 1px solid #888;
     text-align: center;
     z-index: 12;
   }
@@ -120,7 +144,7 @@ body {
     text-align: center;
     background-color: #5b6467;
     background-image: linear-gradient(315deg, #5b6467 0%, #8b939a 74%);
-    height: 70px;
+    height: 65px;
     border-bottom: 1px solid #777;
     position: fixed;
     width: 100%;
@@ -146,6 +170,31 @@ body {
   }
 
   @media screen and (max-device-width: 600px) {
+    div.error {
+      font-size: 36px;
+      margin-left: 20px;
+      font-style: italic;
+    }
+  
+
+    .page-header {
+      height: 96px;
+    }
+    #hamburger {
+      display: block;
+      width: 78px;
+    }
+    .close_hamburger {
+      display: none;
+      z-index: 5;
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 50%;
+      height: 100vh;
+      background-color: rgba(0,0,0,.25);    }
+  
+    
     .uptime {
       font-size: 2.2vw;
     }
@@ -165,11 +214,12 @@ body {
         right: 4px !important;
       }
     
-
+    
     #sidenav {
-      width: 40%;
-      font-size: 36px;
-      line-height: 70px;
+      width: 50%;
+      font-size: 56px;
+      line-height: 112px;
+      left: -50%;
     }
     .page-container {
           line-height: 40px
@@ -187,8 +237,8 @@ body {
     }
 
     .page-title {
-      font-size: 42px;
-      margin-top: 12px;
+      font-size: 46px;
+      margin-top: 22px;
     }
     .page-subtitle {
       margin-top: 5px;

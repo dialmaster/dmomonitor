@@ -22,6 +22,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -58,6 +59,7 @@ func main() {
 	store := cookie.NewStore([]byte("secret"))
 	store.Options(sessions.Options{MaxAge: 60 * 60 * 24}) // expire in a day
 	router.Use(sessions.Sessions("mysession", store))
+	router.Use(sessionMgr())
 
 	myConfig.getConf()
 	if myConfig.QuietMode {
@@ -73,9 +75,6 @@ func main() {
 		}
 		defer db.Close()
 		fmt.Printf("Connected to DB: %s\n", myConfig.DBName)
-
-		// TESTING ONLY
-		fmt.Printf("Cloud key example: %s\n", createCloudKey())
 	}
 
 	if myConfig.MinerLateTime < 20 {
@@ -119,47 +118,204 @@ func main() {
 	router.SetHTMLTemplate(templ)
 
 	if features["COMINGSOON"] || features["MANAGEMENT"] {
-		router.GET("/", getSessionInfo(), landingPage) // For management/website only, should be able to know about session
+		router.GET("/", landingPage)
 	}
 
-	if features["FREE"] || features["MANAGEMENT"] {
+	if features["FREE"] {
 		router.GET("/stats", statsPage)              // Route that only a logged in user session should be able to access
 		router.POST("/minerstats", getMinerStatsRPC) // Route that will need a bearer token from the miner
 		router.POST("/removeminer", removeLateMiner) // Route that will need a bearer token from the miner
 	}
 
 	if features["MANAGEMENT"] {
-		router.GET("/login", getSessionInfo(), loginPage) // login OR create new user... no auth needed for this page.
+		router.GET("/stats", checkLoggedIn(), statsPage) // Route that only a logged in user session should be able to access
+		router.GET("/account", checkLoggedIn(), accountPage)
+		router.POST("/minerstats", checkBearer(), getMinerStatsRPC) // Route that will need a bearer token from the miner
+		router.POST("/removeminer", checkBearer(), removeLateMiner) // Route that will need a bearer token from the miner
+	}
+
+	if features["MANAGEMENT"] {
+		router.GET("/login", loginPage)
 		router.POST("/login", doLogin)
+		router.POST("/register", doRegister)
+		router.GET("/logout", doLogout)
+
 	}
 
 	router.Run(":" + myConfig.ServerPort)
 }
 
-// Hash password and look in the DB here....
+// TODO: Implement
+func checkBearer() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+	}
+}
+
+func accountPage(c *gin.Context) {
+	var pVars pageVars
+	pVars.PageTitle = "DMO Monitor and Management"
+
+	c.HTML(http.StatusOK, "account.html", pVars)
+}
+
+func sessionMgr() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get a new cookie or set one if it does not exist:
+		session := sessions.Default(c)
+		id := session.Get("ID")
+		guest := session.Get("guest")
+
+		if id == nil {
+			session.Set("ID", 0)
+		}
+		if guest == nil {
+			session.Set("guest", true)
+		}
+		session.Save()
+
+		c.Next()
+	}
+}
+
+func checkLoggedIn() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get a new cookie or set one if it does not exist:
+		session := sessions.Default(c)
+		id := session.Get("ID")
+		guest := session.Get("guest")
+		if id != nil && id.(int) != 0 {
+			fmt.Printf("Session User ID is %d\n", id.(int))
+			if guest != nil && !guest.(bool) {
+				c.Next()
+			}
+		}
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+
+	}
+}
+
+func doLogout(c *gin.Context) {
+	session := sessions.Default(c)
+
+	session.Set("dummy", "content") // this will mark the session as "written"
+	session.Options(sessions.Options{MaxAge: -1})
+	session.Save()
+	c.Redirect(http.StatusFound, "/")
+}
+
+func doRegister(c *gin.Context) {
+	username := c.PostForm("uname")
+	password := c.PostForm("psw")
+
+	fmt.Printf("Posted form with username: %s and password %s\n", username, password)
+	var formErrors []string
+
+	valid := len(password) >= 8
+	if !valid {
+		formErrors = append(formErrors, "Password must have minimum eight characters")
+	}
+
+	cnt := 0
+	stmtOut, err := db.Prepare("SELECT count(*) FROM users WHERE username = ?")
+	if err != nil {
+		formErrors = append(formErrors, "Registration failed")
+		c.Set("errors", formErrors)
+		loginPage(c)
+	}
+	stmtOut.QueryRow(username).Scan(&cnt)
+
+	if cnt > 0 {
+		formErrors = append(formErrors, "Please choose another username")
+	}
+
+	if len(formErrors) > 0 {
+		c.Set("errors", formErrors)
+		loginPage(c)
+	}
+
+	cloudkey := createCloudKey()
+	passHash, _ := HashPassword(password)
+
+	stmtIns, err := db.Prepare("INSERT INTO users (password_hash, username, created_at, cloud_key) values (?, ?, NOW(), ?)")
+
+	if err != nil {
+		formErrors = append(formErrors, "Registration failed")
+		c.Set("errors", formErrors)
+		loginPage(c)
+	}
+
+	res, err := stmtIns.Exec(passHash, username, cloudkey)
+
+	if err != nil {
+		formErrors = append(formErrors, "Registration failed")
+		c.Set("errors", formErrors)
+		loginPage(c)
+	}
+
+	id, err := res.LastInsertId()
+
+	if err != nil {
+		formErrors = append(formErrors, "Registration failed")
+		c.Set("errors", formErrors)
+		loginPage(c)
+	}
+
+	session := sessions.Default(c)
+	session.Set("ID", id)
+	session.Set("guest", false)
+	session.Save()
+
+	fmt.Printf("Registration success! User id is: %d\n", id)
+
+	c.Redirect(http.StatusFound, "/")
+
+}
+
 func doLogin(c *gin.Context) {
 	username := c.PostForm("uname")
 	password := c.PostForm("psw")
 
 	fmt.Printf("Posted form with username: %s and password %s\n", username, password)
+	var formErrors []string
+
+	var passHash string
+	var id int
+	stmtOut, err := db.Prepare("SELECT id, password_hash FROM users WHERE username = ?")
+	if err != nil {
+		formErrors = append(formErrors, "Login failed")
+		c.Set("errors", formErrors)
+		loginPage(c)
+	}
+	stmtOut.QueryRow(username).Scan(&id, &passHash)
+
+	if !CheckPasswordHash(password, passHash) {
+		formErrors = append(formErrors, "Login failed")
+		c.Set("errors", formErrors)
+		loginPage(c)
+	}
+
+	// Get a new cookie or set one if it does not exist:
+	session := sessions.Default(c)
+	session.Set("ID", id)
+	session.Set("guest", false)
+	session.Save()
+
+	fmt.Printf("Login success! User id is: %d\n", id)
+
+	// Success! Set userid in session unset guest and redirect
 	c.Redirect(http.StatusFound, "/")
 
 }
 
-func getSessionInfo() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		fmt.Println("before middleware")
-		// Get a new cookie or set one if it does not exist:
-		session := sessions.Default(c)
-		id := session.Get("ID")
-		if id == nil {
-			session.Set("guest", true)
-		} else {
-			session.Set("guest", false)
-		}
-		session.Save()
-		c.Next()
-	}
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
 
 type pageVars struct {
@@ -180,6 +336,7 @@ type pageVars struct {
 	NetHash            string
 	PageTitle          string
 	Guest              bool
+	Errors             []string
 }
 
 func loginPage(c *gin.Context) {
@@ -188,11 +345,18 @@ func loginPage(c *gin.Context) {
 	pVars.PageTitle = "DMO Monitor and Management"
 	pVars.Guest = session.Get("guest").(bool)
 
+	errInterface, found := c.Get("errors")
+	if found {
+		pVars.Errors = errInterface.([]string)
+	}
+
 	c.HTML(http.StatusOK, "login.html", pVars)
 }
 
 func landingPage(c *gin.Context) {
 	var pVars pageVars
+	session := sessions.Default(c)
+	pVars.Guest = session.Get("guest").(bool)
 	pVars.PageTitle = "DMO Monitor and Management"
 
 	fmt.Printf("landingPage: count %s!", c.GetString("count_val"))
@@ -202,6 +366,8 @@ func landingPage(c *gin.Context) {
 func statsPage(c *gin.Context) {
 
 	var pVars pageVars
+	session := sessions.Default(c)
+	pVars.Guest = session.Get("guest").(bool)
 
 	for _, stats := range minerList {
 		if !stats.Late {
