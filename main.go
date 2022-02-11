@@ -1,18 +1,14 @@
 package main
 
 import (
-	"crypto/rand"
 	"database/sql"
 	"embed"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
 	"io/fs"
 	"io/ioutil"
+	"log"
 	"net/http"
-	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -22,7 +18,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -148,15 +143,19 @@ func main() {
 // TODO: Implement
 func checkBearer() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		auth := c.Request.Header.Get("Authorization")
+		if auth == "" {
+			log.Printf("Attempt to access Bearer auth path with no token\n")
+			c.String(http.StatusForbidden, "No Authorization header provided")
+			c.Abort()
+			return
+		}
+		token := strings.TrimPrefix(auth, "Bearer ")
+
+		log.Printf("Bearer token is %s", token)
+
 		c.Next()
 	}
-}
-
-func accountPage(c *gin.Context) {
-	var pVars pageVars
-	pVars.PageTitle = "DMO Monitor and Management"
-
-	c.HTML(http.StatusOK, "account.html", pVars)
 }
 
 func sessionMgr() gin.HandlerFunc {
@@ -185,7 +184,6 @@ func checkLoggedIn() gin.HandlerFunc {
 		id := session.Get("ID")
 		guest := session.Get("guest")
 		if id != nil && id.(int) != 0 {
-			fmt.Printf("Session User ID is %d\n", id.(int))
 			if guest != nil && !guest.(bool) {
 				c.Next()
 			}
@@ -193,208 +191,6 @@ func checkLoggedIn() gin.HandlerFunc {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 
 	}
-}
-
-func doLogout(c *gin.Context) {
-	session := sessions.Default(c)
-
-	session.Set("dummy", "content") // this will mark the session as "written"
-	session.Options(sessions.Options{MaxAge: -1})
-	session.Save()
-	c.Redirect(http.StatusFound, "/")
-}
-
-func doRegister(c *gin.Context) {
-	username := c.PostForm("uname")
-	password := c.PostForm("psw")
-
-	fmt.Printf("Posted form with username: %s and password %s\n", username, password)
-	var formErrors []string
-
-	valid := len(password) >= 8
-	if !valid {
-		formErrors = append(formErrors, "Password must have minimum eight characters")
-	}
-
-	cnt := 0
-	stmtOut, err := db.Prepare("SELECT count(*) FROM users WHERE username = ?")
-	if err != nil {
-		formErrors = append(formErrors, "Registration failed")
-		c.Set("errors", formErrors)
-		loginPage(c)
-	}
-	stmtOut.QueryRow(username).Scan(&cnt)
-
-	if cnt > 0 {
-		formErrors = append(formErrors, "Please choose another username")
-	}
-
-	if len(formErrors) > 0 {
-		c.Set("errors", formErrors)
-		loginPage(c)
-	}
-
-	cloudkey := createCloudKey()
-	passHash, _ := HashPassword(password)
-
-	stmtIns, err := db.Prepare("INSERT INTO users (password_hash, username, created_at, cloud_key) values (?, ?, NOW(), ?)")
-
-	if err != nil {
-		formErrors = append(formErrors, "Registration failed")
-		c.Set("errors", formErrors)
-		loginPage(c)
-	}
-
-	res, err := stmtIns.Exec(passHash, username, cloudkey)
-
-	if err != nil {
-		formErrors = append(formErrors, "Registration failed")
-		c.Set("errors", formErrors)
-		loginPage(c)
-	}
-
-	id, err := res.LastInsertId()
-
-	if err != nil {
-		formErrors = append(formErrors, "Registration failed")
-		c.Set("errors", formErrors)
-		loginPage(c)
-	}
-
-	session := sessions.Default(c)
-	session.Set("ID", id)
-	session.Set("guest", false)
-	session.Save()
-
-	fmt.Printf("Registration success! User id is: %d\n", id)
-
-	c.Redirect(http.StatusFound, "/")
-
-}
-
-func doLogin(c *gin.Context) {
-	username := c.PostForm("uname")
-	password := c.PostForm("psw")
-
-	fmt.Printf("Posted form with username: %s and password %s\n", username, password)
-	var formErrors []string
-
-	var passHash string
-	var id int
-	stmtOut, err := db.Prepare("SELECT id, password_hash FROM users WHERE username = ?")
-	if err != nil {
-		formErrors = append(formErrors, "Login failed")
-		c.Set("errors", formErrors)
-		loginPage(c)
-	}
-	stmtOut.QueryRow(username).Scan(&id, &passHash)
-
-	if !CheckPasswordHash(password, passHash) {
-		formErrors = append(formErrors, "Login failed")
-		c.Set("errors", formErrors)
-		loginPage(c)
-	}
-
-	// Get a new cookie or set one if it does not exist:
-	session := sessions.Default(c)
-	session.Set("ID", id)
-	session.Set("guest", false)
-	session.Save()
-
-	fmt.Printf("Login success! User id is: %d\n", id)
-
-	// Success! Set userid in session unset guest and redirect
-	c.Redirect(http.StatusFound, "/")
-
-}
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
-}
-
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-type pageVars struct {
-	Uptime             string
-	MinerList          map[string]mineRpc
-	Totalhash          string
-	Totalminers        int
-	WalletOverallStats OverallInfoTX
-	WalletDailyStats   []DayStatTX
-	WalletHourlyStats  []HourStatTX
-	AutoRefresh        int
-	DailyStatDays      int
-	VersionString      string
-	CurrentPrice       float64
-	DollarsPerDay      float64
-	DollarsPerWeek     float64
-	DollarsPerMonth    float64
-	NetHash            string
-	PageTitle          string
-	Guest              bool
-	Errors             []string
-}
-
-func loginPage(c *gin.Context) {
-	session := sessions.Default(c)
-	var pVars pageVars
-	pVars.PageTitle = "DMO Monitor and Management"
-	pVars.Guest = session.Get("guest").(bool)
-
-	errInterface, found := c.Get("errors")
-	if found {
-		pVars.Errors = errInterface.([]string)
-	}
-
-	c.HTML(http.StatusOK, "login.html", pVars)
-}
-
-func landingPage(c *gin.Context) {
-	var pVars pageVars
-	session := sessions.Default(c)
-	pVars.Guest = session.Get("guest").(bool)
-	pVars.PageTitle = "DMO Monitor and Management"
-
-	fmt.Printf("landingPage: count %s!", c.GetString("count_val"))
-	c.HTML(http.StatusOK, "landing.html", pVars)
-}
-
-func statsPage(c *gin.Context) {
-
-	var pVars pageVars
-	session := sessions.Default(c)
-	pVars.Guest = session.Get("guest").(bool)
-
-	for _, stats := range minerList {
-		if !stats.Late {
-			pVars.Totalminers += 1
-		}
-	}
-
-	pVars.PageTitle = "DMO Monitor"
-	pVars.NetHash = overallInfoTX.NetHash
-
-	pVars.CurrentPrice = currentPricePerDMO
-	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay
-	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 7
-	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 30
-	pVars.VersionString = versionString
-	pVars.MinerList = minerList
-	pVars.Totalhash = totalHashG
-	pVars.WalletOverallStats = overallInfoTX
-	pVars.WalletDailyStats = dayStatsTX
-	pVars.WalletHourlyStats = hourStatsTX
-	pVars.AutoRefresh = myConfig.AutoRefreshSeconds
-	pVars.DailyStatDays = myConfig.DailyStatDays
-
-	pVars.Uptime = time.Since(progStartTime).Round(time.Second).String()
-
-	c.HTML(http.StatusOK, "stats.html", pVars)
-
 }
 
 func myStaticFS() http.FileSystem {
@@ -405,122 +201,6 @@ func myStaticFS() http.FileSystem {
 	}
 
 	return http.FS(sub)
-}
-
-// https://api.coingecko.com/api/v3/simple/price?ids=dynamo-coin&vs_currencies=USD
-func getCoinGeckoDMOPrice() {
-
-	client := &http.Client{}
-	reqUrl := url.URL{
-		Scheme: "http",
-		Host:   "api.coingecko.com",
-		Path:   "api/v3/simple/price",
-	}
-
-	req, err := http.NewRequest("GET", reqUrl.String()+"?ids=dynamo-coin&vs_currencies=USD", nil)
-
-	type geckoPrice struct {
-		DynamoCoin struct {
-			Usd float64 `json:"usd"`
-		} `json:"dynamo-coin"`
-	}
-
-	resp, err := client.Do(req)
-	// Sometimes the coingecko api call fails, and we do not want that to kill our app...
-	if err != nil {
-		return
-	}
-	bodyText, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-
-	var myGeckoPrice geckoPrice
-
-	if err := json.Unmarshal(bodyText, &myGeckoPrice); err != nil {
-		return
-	}
-
-	currentPricePerDMO = myGeckoPrice.DynamoCoin.Usd
-}
-
-func sendOfflineNotificationToTelegram(minerName string) {
-	params := url.Values{}
-	params.Add("chat_id", myConfig.TelegramUserId)
-	params.Add("text", "Your miner '"+minerName+"' is offline")
-	body := strings.NewReader(params.Encode())
-
-	req, err := http.NewRequest("POST", "https://api.telegram.org/bot5084964646:AAEmnj-HIWsM1oBIHeCy03JsjBw_pG5I5Ik/sendMessage", body)
-
-	// For now leaving errors unhandled... if the telegram notification fails it's not really a huge deal
-	if err != nil {
-		return
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-}
-
-type mineRpc struct {
-	Name        string
-	Hashrate    int
-	HashrateStr string
-	Accept      int
-	Reject      int
-	Submit      int
-	LastReport  time.Time
-	Late        bool
-	HowLate     string
-}
-
-func getMinerStatsRPC(c *gin.Context) {
-	var thisStat mineRpc
-	if err := c.BindJSON(&thisStat); err != nil {
-		fmt.Printf("Got unhandled (bad) request!")
-		return
-	}
-
-	thisStat.HashrateStr = formatHashNum(thisStat.Hashrate)
-	thisStat.LastReport = time.Now()
-	mutex.Lock()
-	minerList[thisStat.Name] = thisStat
-	mutex.Unlock()
-}
-
-func removeLateMiner(c *gin.Context) {
-	minerName := c.Query("minerName")
-	// Do not allow removal of active miners
-	if minerList[minerName].Late {
-		delete(minerList, minerName)
-	}
-}
-
-func StringSpaced(text string, spacingchar string, numspaces int) string {
-	numpads := numspaces - len(text)
-	return text + strings.Repeat(spacingchar, numpads)
-}
-
-func formatHashNum(hashrate int) string {
-	if hashrate < 1024 {
-		return strconv.Itoa(hashrate)
-	} else if hashrate > 1024 && hashrate < 1048576 {
-		scaled := float64(hashrate) / float64(1024)
-
-		return fmt.Sprintf("%.0fKH", scaled)
-	} else if hashrate >= 1048576 && hashrate < 1073741824 {
-		scaled := float64(hashrate) / float64(1048576)
-		return fmt.Sprintf("%.2fMH", scaled)
-
-	} else if hashrate >= 1073741824 && hashrate < 1099511627776 {
-		scaled := float64(hashrate) / float64(1073741824)
-		return fmt.Sprintf("%.2fGH", scaled)
-	}
-
-	return strconv.Itoa(hashrate) // Meh, it'll hopefully be a while before we exceed 999GH... if so just return the raw hash
 }
 
 func updateMinerStatus() {
@@ -716,14 +396,4 @@ func consoleOutput() {
 		fmt.Printf("\n\n\t\t\t\t\tNo Receiving Address Statistics Available\n\n")
 	}
 
-}
-
-func createCloudKey() string {
-	b := make([]byte, 40)
-	_, err := rand.Read(b)
-	if err != nil {
-		fmt.Println("Unable to generate random number for cloud key")
-		return ""
-	}
-	return base64.URLEncoding.EncodeToString(b)
 }

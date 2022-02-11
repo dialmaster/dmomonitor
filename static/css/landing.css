@@ -11,10 +11,10 @@
   }
   .free-app-info {
     padding: 0px;
-    width: 660px;
+    width: calc(100% - 325px);
     float: right;
     text-align: left;
-    margin-left: 15px;
+    margin-left: 20px;
   }
   .free-app-screenshot {
     width: 285px;
@@ -31,7 +31,7 @@
       margin: 0px 30px 0px 30px;
     }
     .free-app-info {
-      width: 635px;
+      
       font-size: 24px;
     }
   }
