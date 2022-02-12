@@ -17,6 +17,47 @@ func doLogout(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/")
 }
 
+func doChangePass(c *gin.Context) {
+	session := sessions.Default(c)
+	userID := session.Get("ID").(int)
+
+	oldpass := c.PostForm("psw")
+	newpass := c.PostForm("newpsw")
+	confirmnewpass := c.PostForm("confirmnewpsw")
+
+	var formErrors []string
+
+	if newpass != confirmnewpass {
+		formErrors = append(formErrors, "New password must match new password confirmation")
+	}
+
+	valid := len(newpass) >= 8
+	if !valid {
+		formErrors = append(formErrors, "Password must have minimum eight characters")
+	}
+
+	if !CheckPasswordHash(oldpass, userIDList[userID].PasswordHash) {
+		formErrors = append(formErrors, "You must correctly enter your old password to update your password")
+	}
+
+	passHash, _ := HashPassword(newpass)
+
+	_, err := db.Exec("UPDATE users SET password_hash = ? WHERE ID = ?", passHash, userID)
+
+	if err != nil {
+		formErrors = append(formErrors, "Update password failed")
+	} else {
+		formErrors = append(formErrors, "Password updated")
+		getAllUserInfo()
+	}
+
+	if len(formErrors) > 0 {
+		c.Set("errors", formErrors)
+		accountPage(c)
+	}
+
+}
+
 func doRegister(c *gin.Context) {
 	username := c.PostForm("uname")
 	password := c.PostForm("psw")

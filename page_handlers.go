@@ -27,12 +27,22 @@ type pageVars struct {
 	NetHash            string
 	PageTitle          string
 	Guest              bool
+	CloudKey           string
+	UserName           string
 	Errors             []string
 }
 
 func accountPage(c *gin.Context) {
 	var pVars pageVars
+	session := sessions.Default(c)
+	userID := session.Get("ID").(int)
 	pVars.PageTitle = "DMO Monitor and Management"
+	pVars.UserName = userIDList[userID].UserName
+	pVars.CloudKey = userIDList[userID].CloudKey
+	errInterface, found := c.Get("errors")
+	if found {
+		pVars.Errors = errInterface.([]string)
+	}
 
 	c.HTML(http.StatusOK, "account.html", pVars)
 }

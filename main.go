@@ -126,6 +126,7 @@ func main() {
 	if features["MANAGEMENT"] {
 		router.GET("/stats", checkLoggedIn(), statsPage) // Route that only a logged in user session should be able to access
 		router.GET("/account", checkLoggedIn(), accountPage)
+		router.POST("/changepass", checkLoggedIn(), doChangePass)
 		router.POST("/minerstats", checkBearer(), getMinerStatsRPC) // Route that will need a bearer token from the miner
 		router.POST("/removeminer", checkBearer(), removeLateMiner) // Route that will need a bearer token from the miner
 	}
