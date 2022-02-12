@@ -141,7 +141,6 @@ func main() {
 	router.Run(":" + myConfig.ServerPort)
 }
 
-// TODO: Implement
 func checkBearer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth := c.Request.Header.Get("Authorization")
@@ -150,11 +149,17 @@ func checkBearer() gin.HandlerFunc {
 			c.String(http.StatusForbidden, "No Authorization header provided")
 			c.Abort()
 			return
+		} else {
+			token := strings.TrimPrefix(auth, "Bearer ")
+			_, ok := cloudKeyList[token]
+			if !ok {
+				log.Printf("Bearer token provided is not authorized: %s\n", token)
+				c.String(http.StatusForbidden, "Invalid Token")
+				c.Abort()
+				return
+			}
+			c.Set("cloudKey", token)
 		}
-		token := strings.TrimPrefix(auth, "Bearer ")
-
-		log.Printf("Bearer token is %s", token)
-
 		c.Next()
 	}
 }
