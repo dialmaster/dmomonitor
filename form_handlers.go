@@ -28,16 +28,7 @@ func doRegister(c *gin.Context) {
 		formErrors = append(formErrors, "Password must have minimum eight characters")
 	}
 
-	cnt := 0
-	stmtOut, err := db.Prepare("SELECT count(*) FROM users WHERE username = ?")
-	if err != nil {
-		formErrors = append(formErrors, "Registration failed")
-		c.Set("errors", formErrors)
-		loginPage(c)
-	}
-	stmtOut.QueryRow(username).Scan(&cnt)
-
-	if cnt > 0 {
+	if _, ok := userList[username]; ok {
 		formErrors = append(formErrors, "Please choose another username")
 	}
 
@@ -49,15 +40,7 @@ func doRegister(c *gin.Context) {
 	cloudkey := createCloudKey()
 	passHash, _ := HashPassword(password)
 
-	stmtIns, err := db.Prepare("INSERT INTO users (password_hash, username, created_at, cloud_key) values (?, ?, NOW(), ?)")
-
-	if err != nil {
-		formErrors = append(formErrors, "Registration failed")
-		c.Set("errors", formErrors)
-		loginPage(c)
-	}
-
-	res, err := stmtIns.Exec(passHash, username, cloudkey)
+	res, err := db.Exec("INSERT INTO users (password_hash, username, created_at, cloud_key) values (?, ?, NOW(), ?)", passHash, username, cloudkey)
 
 	if err != nil {
 		formErrors = append(formErrors, "Registration failed")
@@ -72,6 +55,8 @@ func doRegister(c *gin.Context) {
 		c.Set("errors", formErrors)
 		loginPage(c)
 	}
+
+	getAllUserInfo()
 
 	session := sessions.Default(c)
 	session.Set("ID", id)
@@ -89,17 +74,7 @@ func doLogin(c *gin.Context) {
 	fmt.Printf("Posted form with username: %s and password %s\n", username, password)
 	var formErrors []string
 
-	var passHash string
-	var id int
-	stmtOut, err := db.Prepare("SELECT id, password_hash FROM users WHERE username = ?")
-	if err != nil {
-		formErrors = append(formErrors, "Login failed")
-		c.Set("errors", formErrors)
-		loginPage(c)
-	}
-	stmtOut.QueryRow(username).Scan(&id, &passHash)
-
-	if !CheckPasswordHash(password, passHash) {
+	if !CheckPasswordHash(password, userList[username].PasswordHash) {
 		formErrors = append(formErrors, "Login failed")
 		c.Set("errors", formErrors)
 		loginPage(c)
@@ -107,11 +82,10 @@ func doLogin(c *gin.Context) {
 
 	// Get a new cookie or set one if it does not exist:
 	session := sessions.Default(c)
+	id := userList[username].ID
 	session.Set("ID", id)
 	session.Set("guest", false)
 	session.Save()
-
-	fmt.Printf("Login success! User id is: %d\n", id)
 
 	// Success! Set userid in session unset guest and redirect
 	c.Redirect(http.StatusFound, "/")

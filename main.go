@@ -70,6 +70,7 @@ func main() {
 		}
 		defer db.Close()
 		fmt.Printf("Connected to DB: %s\n", myConfig.DBName)
+		getAllUserInfo()
 	}
 
 	if myConfig.MinerLateTime < 20 {

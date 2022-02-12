@@ -14,6 +14,44 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UserData struct {
+	PasswordHash string
+	UserName     string
+	CloudKey     string
+	ID           int
+}
+
+var userList = make(map[string]UserData)
+
+var cloudKeyList = make(map[string]UserData)
+
+var userIDList = make(map[int]UserData)
+
+// Get all users in the DB:
+func getAllUserInfo() {
+	results, err := db.Query("select password_hash, username, cloud_key, id from users")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for results.Next() {
+		var thisUser UserData
+		err = results.Scan(&thisUser.PasswordHash, &thisUser.UserName, &thisUser.CloudKey, &thisUser.ID)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		mutex.Lock()
+		userList[thisUser.UserName] = thisUser
+		cloudKeyList[thisUser.CloudKey] = thisUser
+		userIDList[thisUser.ID] = thisUser
+
+		mutex.Unlock()
+	}
+
+}
+
 func createCloudKey() string {
 	b := make([]byte, 40)
 	_, err := rand.Read(b)
