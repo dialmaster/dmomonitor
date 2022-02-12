@@ -59,7 +59,7 @@ func doRegister(c *gin.Context) {
 	getAllUserInfo()
 
 	session := sessions.Default(c)
-	session.Set("ID", id)
+	session.Set("ID", int(id))
 	session.Set("guest", false)
 	session.Save()
 
