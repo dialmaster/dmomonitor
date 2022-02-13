@@ -31,17 +31,17 @@ function hamburgerClick(ele) {
 }
 
 // Countdown to page refresh
-window.onload = function exampleFunction() {
+window.onload = function refreshCountDown() {
 	var timer = document.querySelector("body").dataset.timer;
 	var lastRefresh = 0;
-	function myLoop() {
+	function refreshLoop() {
 		setTimeout(function() {
 
 		document.getElementById("my-timer").innerHTML = lastRefresh + 's';
 		lastRefresh += 1;
-		myLoop();
+		refreshLoop();
 		  
 		}, 1000)
 	  }
-	  myLoop();
+	  refreshLoop();
 }
