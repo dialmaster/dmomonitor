@@ -28,15 +28,22 @@ func getMinerStatsRPC(c *gin.Context) {
 
 	thisStat.HashrateStr = formatHashNum(thisStat.Hashrate)
 	thisStat.LastReport = time.Now()
-	mutex.Lock()
-	minerList[thisStat.Name] = thisStat
-	mutex.Unlock()
-}
 
-func removeLateMiner(c *gin.Context) {
-	minerName := c.Query("minerName")
-	// Do not allow removal of active miners
-	if minerList[minerName].Late {
-		delete(minerList, minerName)
+	cInterface, found := c.Get("cloudKey")
+	cloudKey := ""
+	if found {
+		cloudKey = cInterface.(string)
+	} else {
+		return
 	}
+
+	mutex.Lock()
+
+	_, ok := minerList[cloudKey]
+	if !ok {
+		minerList[cloudKey] = make(map[string]mineRpc)
+	}
+	minerList[cloudKey][thisStat.Name] = thisStat
+
+	mutex.Unlock()
 }

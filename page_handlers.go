@@ -72,16 +72,20 @@ func landingPage(c *gin.Context) {
 }
 
 func statsPage(c *gin.Context) {
+	session := sessions.Default(c)
+	userID := session.Get("ID").(int)
+	cloudKey := userIDList[userID].CloudKey
 
 	var pVars pageVars
-	session := sessions.Default(c)
 	pVars.Guest = session.Get("guest").(bool)
 
-	for _, stats := range minerList {
+	mutex.Lock()
+	for _, stats := range minerList[cloudKey] {
 		if !stats.Late {
 			pVars.Totalminers += 1
 		}
 	}
+	mutex.Unlock()
 
 	pVars.PageTitle = "DMO Monitor"
 	pVars.NetHash = overallInfoTX.NetHash
@@ -91,8 +95,16 @@ func statsPage(c *gin.Context) {
 	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 7
 	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 30
 	pVars.VersionString = versionString
-	pVars.MinerList = minerList
-	pVars.Totalhash = totalHashG
+
+	myMiners := make(map[string]mineRpc)
+	mutex.Lock()
+	for k, v := range minerList[cloudKey] {
+		myMiners[k] = v
+	}
+	mutex.Unlock()
+
+	pVars.MinerList = myMiners
+	pVars.Totalhash = totalHashG[cloudKey]
 	pVars.WalletOverallStats = overallInfoTX
 	pVars.WalletDailyStats = dayStatsTX
 	pVars.WalletHourlyStats = hourStatsTX

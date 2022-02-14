@@ -9,8 +9,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -36,10 +34,10 @@ var db *sql.DB
 var dbErr error
 
 var myConfig conf
-var minerList = make(map[string]mineRpc)
+var minerList = make(map[string]map[string]mineRpc)
 var progStartTime = time.Now()
 var mutex = &sync.Mutex{}
-var totalHashG = ""
+var totalHashG = make(map[string]string)
 var currentPricePerDMO = 0.0
 
 func main() {
@@ -100,15 +98,11 @@ func main() {
 				}
 
 				updateMinerStatus()
-				if !myConfig.QuietMode {
-					consoleOutput()
-				}
 				time.Sleep(10 * time.Second)
 			}
 		}()
 	}
 
-	// Anyone can access this route, and it doesn't matter what their session has in it...
 	router.StaticFS("/static", myStaticFS())
 	templ := template.Must(template.New("").ParseFS(tmplFS, "templates/*.html"))
 	router.SetHTMLTemplate(templ)
@@ -118,17 +112,17 @@ func main() {
 	}
 
 	if features["FREE"] {
-		router.GET("/stats", statsPage)              // Route that only a logged in user session should be able to access
-		router.POST("/minerstats", getMinerStatsRPC) // Route that will need a bearer token from the miner
-		router.POST("/removeminer", removeLateMiner) // Route that will need a bearer token from the miner
+		router.GET("/stats", statsPage)
+		router.POST("/minerstats", getMinerStatsRPC)
+		router.POST("/removeminer", removeLateMiner)
 	}
 
 	if features["MANAGEMENT"] {
-		router.GET("/stats", checkLoggedIn(), statsPage) // Route that only a logged in user session should be able to access
+		router.GET("/stats", checkLoggedIn(), statsPage)
 		router.GET("/account", checkLoggedIn(), accountPage)
 		router.POST("/changepass", checkLoggedIn(), doChangePass)
-		router.POST("/minerstats", checkBearer(), getMinerStatsRPC) // Route that will need a bearer token from the miner
-		router.POST("/removeminer", checkBearer(), removeLateMiner) // Route that will need a bearer token from the miner
+		router.POST("/minerstats", checkBearer(), getMinerStatsRPC)
+		router.POST("/removeminer", checkLoggedIn(), removeLateMiner)
 	}
 
 	if features["MANAGEMENT"] {
@@ -211,40 +205,32 @@ func myStaticFS() http.FileSystem {
 }
 
 func updateMinerStatus() {
+
+	mutex.Lock() // For now... lock for the whole time we are reading and writing back to minerList...
 	if len(minerList) > 0 {
-		names := make([]string, 0)
-		for name, _ := range minerList {
-			names = append(names, name)
-		}
+		for cloudKey, myMinerList := range minerList {
 
-		sort.Strings(names)
-
-		totalHash := 0
-		for _, name := range names {
-			stats := minerList[name]
-			howLong := time.Now().Sub(stats.LastReport).Round(time.Second)
-			stats.HowLate = howLong.String()
-			mutex.Lock()
-			minerList[name] = stats
-			mutex.Unlock()
-			if howLong.Seconds() > myConfig.MinerLateTime && stats.Late == false {
-				stats.Late = true
-				mutex.Lock()
-				minerList[name] = stats
-				mutex.Unlock()
-				if len(myConfig.TelegramUserId) > 0 {
-					sendOfflineNotificationToTelegram(name)
+			totalHash := 0
+			for name, stats := range myMinerList {
+				howLong := time.Since(stats.LastReport).Round(time.Second)
+				stats.HowLate = howLong.String()
+				myMinerList[name] = stats
+				if howLong.Seconds() > myConfig.MinerLateTime && !stats.Late {
+					stats.Late = true
+					myMinerList[name] = stats
+					if len(myConfig.TelegramUserId) > 0 {
+						sendOfflineNotificationToTelegram(name)
+					}
+				} else if howLong.Seconds() <= myConfig.MinerLateTime {
+					stats.Late = false
+					myMinerList[name] = stats
+					totalHash += stats.Hashrate
 				}
-			} else if howLong.Seconds() <= myConfig.MinerLateTime {
-				stats.Late = false
-				mutex.Lock()
-				minerList[name] = stats
-				mutex.Unlock()
-				totalHash += stats.Hashrate
 			}
+			totalHashG[cloudKey] = formatHashNum(totalHash) // TODO: should be by cloudkey...
 		}
-		totalHashG = formatHashNum(totalHash)
 	}
+	mutex.Unlock()
 
 	nDays := len(addrStats.DailyStats)
 	overallInfoTX.CurrentCoinsPerDay = addrStats.DailyStats[nDays-2].Coins
@@ -286,121 +272,6 @@ func updateMinerStatus() {
 		thisHour.CoinCount = float64(addrStats.HourlyStats[j].Coins)
 		thisHour.CoinsPerMinute = float64(addrStats.HourlyStats[j].Coins) * (1.0 / 60.0)
 		hourStatsTX = append(hourStatsTX, thisHour)
-	}
-
-}
-
-// TODO: Add console output back in
-func consoleOutput() {
-
-	var H1Col = colorBrightCyan
-	var H2Col = colorBrightGreen
-	var H3Col = colorBrightBlue
-	var WarnCol = colorRed
-
-	fmt.Print("\033[H\033[2J") // Clear screen
-	setColor(colorBrightWhite)
-	fmt.Printf("\t\t\t\t\t\tDMO-Monitor %s\n\n", versionString)
-
-	setColor(H1Col)
-	fmt.Printf("\t\t\t\t\tMiner Monitoring Stats\n\n")
-
-	setColor(H2Col)
-	fmt.Printf("\t%s%s%s%s%s%s\n",
-		StringSpaced("Miner Name", " ", 24),
-		StringSpaced("Last Reported", " ", 35),
-		StringSpaced("Hashrate", " ", 12),
-		StringSpaced("Submitted", " ", 12),
-		StringSpaced("Accepted", " ", 12),
-		StringSpaced("Rejected", " ", 12))
-
-	warnings := ""
-	if len(minerList) > 0 {
-		setColor(H3Col)
-		names := make([]string, 0)
-		for name, _ := range minerList {
-			names = append(names, name)
-		}
-
-		sort.Strings(names)
-
-		for _, name := range names {
-			stats := minerList[name]
-			setColor(H3Col)
-
-			if stats.Late {
-				warnings += "\n\tWARN: " + name + " has not reported in " + stats.HowLate + "\n"
-				setColor(WarnCol)
-			}
-
-			fmt.Printf("\t%s%s%s%s%s%s\n",
-				StringSpaced(name, " ", 24),
-				StringSpaced(stats.LastReport.Format("2006-01-02 15:04:05"), " ", 35),
-				StringSpaced(stats.HashrateStr, " ", 12),
-				StringSpaced(strconv.Itoa(stats.Submit), " ", 12),
-				StringSpaced(strconv.Itoa(stats.Accept), " ", 12),
-				strconv.Itoa(stats.Reject),
-			)
-			setColor(H3Col)
-		}
-
-		fmt.Printf("\n\t%s%s\n",
-			StringSpaced(fmt.Sprintf("Total Miners: %d", len(minerList)), " ", 32),
-			StringSpaced(fmt.Sprintf("Total Hashrate: %s", totalHashG), " ", 32))
-	} else {
-		setColor(WarnCol)
-		fmt.Printf("\t\t\t\tNo active miners\n")
-	}
-
-	if len(warnings) > 0 {
-		setColor(WarnCol)
-		fmt.Printf(warnings)
-		setColor(H3Col)
-	}
-
-	if myConfig.AddrsToMonitor != "" {
-
-		setColor(H1Col)
-		fmt.Printf("\n\n\t\t\t\t\tAddress Mining Stats for Address(es)\n")
-		setColor(H2Col)
-		fmt.Printf("\n\t\t\t\tDaily Statistics (Last %d Days)\n", myConfig.DailyStatDays)
-		fmt.Printf("\t%s%s%s%s\n",
-			StringSpaced("Day", " ", 24),
-			StringSpaced("Coins", " ", 35),
-			StringSpaced("Coins/Hr", " ", 12),
-			StringSpaced("Win Percent", " ", 12))
-		setColor(H3Col)
-
-		for _, day := range dayStatsTX {
-			fmt.Printf("\t%s%s%s%s\n",
-				StringSpaced(day.Day, " ", 24),
-				StringSpaced(fmt.Sprintf("%.2f", day.CoinCount), " ", 35),
-				StringSpaced(fmt.Sprintf("%.2f", day.CoinsPerHour), " ", 12),
-				StringSpaced(fmt.Sprintf("%.2f", day.WinPercent), " ", 12))
-		}
-
-		setColor(H2Col)
-		fmt.Printf("\n\t\t\t\tTodays Hourly Statistics\n")
-		fmt.Printf("\t%s%s%s\n",
-			StringSpaced("Hour", " ", 24),
-			StringSpaced("Coins", " ", 35),
-			StringSpaced("Coins/Min", " ", 12))
-
-		setColor(H3Col)
-
-		for _, hour := range hourStatsTX {
-			fmt.Printf("\t%s%s%s\n",
-				StringSpaced(fmt.Sprintf("%d", hour.Hour), " ", 24),
-				StringSpaced(fmt.Sprintf("%.2f", hour.CoinCount), " ", 35),
-				StringSpaced(fmt.Sprintf("%.2f", hour.CoinsPerMinute), " ", 12))
-		}
-
-		fmt.Printf("\n\t%s\n",
-			StringSpaced(fmt.Sprintf("Projected Coins Today: %s", overallInfoTX.Projection), " ", 40))
-
-	} else {
-		setColor(WarnCol)
-		fmt.Printf("\n\n\t\t\t\t\tNo Receiving Address Statistics Available\n\n")
 	}
 
 }

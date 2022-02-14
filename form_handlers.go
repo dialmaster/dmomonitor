@@ -17,6 +17,19 @@ func doLogout(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/")
 }
 
+func removeLateMiner(c *gin.Context) {
+	minerName := c.Query("minerName")
+	session := sessions.Default(c)
+	userID := session.Get("ID").(int)
+	cloudKey := userIDList[userID].CloudKey
+
+	mutex.Lock()
+	if minerList[cloudKey][minerName].Late {
+		delete(minerList[cloudKey], minerName)
+	}
+	mutex.Unlock()
+}
+
 func doChangePass(c *gin.Context) {
 	session := sessions.Default(c)
 	userID := session.Get("ID").(int)
