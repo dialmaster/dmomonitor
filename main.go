@@ -89,27 +89,21 @@ func main() {
 		txStats()
 	}
 
-	if !features["COMINGSOON"] {
-		go func() {
-			for {
-				getCoinGeckoDMOPrice()
-				if len(myConfig.AddrsToMonitor) > 0 {
-					txStats()
-				}
-
-				updateMinerStatus()
-				time.Sleep(10 * time.Second)
+	go func() {
+		for {
+			getCoinGeckoDMOPrice()
+			if len(myConfig.AddrsToMonitor) > 0 {
+				txStats()
 			}
-		}()
-	}
+
+			updateMinerStatus()
+			time.Sleep(10 * time.Second)
+		}
+	}()
 
 	router.StaticFS("/static", myStaticFS())
 	templ := template.Must(template.New("").ParseFS(tmplFS, "templates/*.html"))
 	router.SetHTMLTemplate(templ)
-
-	if features["COMINGSOON"] || features["MANAGEMENT"] {
-		router.GET("/", landingPage)
-	}
 
 	if features["FREE"] {
 		router.GET("/stats", statsPage)
@@ -118,19 +112,16 @@ func main() {
 	}
 
 	if features["MANAGEMENT"] {
+		router.GET("/", landingPage)
 		router.GET("/stats", checkLoggedIn(), statsPage)
 		router.GET("/account", checkLoggedIn(), accountPage)
 		router.POST("/changepass", checkLoggedIn(), doChangePass)
 		router.POST("/minerstats", checkBearer(), getMinerStatsRPC)
 		router.POST("/removeminer", checkLoggedIn(), removeLateMiner)
-	}
-
-	if features["MANAGEMENT"] {
 		router.GET("/login", loginPage)
 		router.POST("/login", doLogin)
 		router.POST("/register", doRegister)
 		router.GET("/logout", doLogout)
-
 	}
 
 	router.Run(":" + myConfig.ServerPort)
