@@ -223,46 +223,52 @@ func updateMinerStatus() {
 	}
 	mutex.Unlock()
 
-	nDays := len(addrStats.DailyStats)
-	overallInfoTX.CurrentCoinsPerDay = addrStats.DailyStats[nDays-2].Coins
-	overallInfoTX.Projection = fmt.Sprintf("%.1f", addrStats.ProjectedCoinsToday)
-	overallInfoTX.NetHash = formatHashNum(int(addrStats.NetHash))
+	for userID, stats := range addrStats {
+		var thisInfo OverallInfoTX
 
-	// Daily Average is the Average of the average of all days except today...
-	tmpCoins := 0.0
-	tmpPerc := 0.0
-	dayStatsTX = nil
-	for i := 0; i < nDays; i++ {
+		nDays := len(stats.DailyStats)
+		thisInfo.CurrentCoinsPerDay = stats.DailyStats[nDays-2].Coins
+		thisInfo.Projection = fmt.Sprintf("%.1f", stats.ProjectedCoinsToday)
+		thisInfo.NetHash = formatHashNum(int(stats.NetHash))
 
-		var thisDay DayStatTX
-		thisDay.Day = addrStats.DailyStats[i].Day
-		thisDay.CoinCount = addrStats.DailyStats[i].Coins
-		thisDay.WinPercent = addrStats.DailyStats[i].WinPercent
-		thisDay.CoinsPerHour = thisDay.CoinCount / 24.0
+		// Daily Average is the Average of the average of all days except today...
+		tmpCoins := 0.0
+		tmpPerc := 0.0
+		for i := 0; i < nDays; i++ {
 
-		if i < (nDays - 1) {
-			tmpCoins += addrStats.DailyStats[i].Coins
-			tmpPerc += addrStats.DailyStats[i].WinPercent
-		} else {
-			thisDay.CoinsPerHour = addrStats.ProjectedCoinsToday / 24.0
+			var thisDay DayStatTX
+			thisDay.Day = stats.DailyStats[i].Day
+			thisDay.CoinCount = stats.DailyStats[i].Coins
+			thisDay.WinPercent = stats.DailyStats[i].WinPercent
+			thisDay.CoinsPerHour = thisDay.CoinCount / 24.0
+
+			if i < (nDays - 1) {
+				tmpCoins += stats.DailyStats[i].Coins
+				tmpPerc += stats.DailyStats[i].WinPercent
+			} else {
+				thisDay.CoinsPerHour = stats.ProjectedCoinsToday / 24.0
+			}
+
+			thisInfo.DayStats = append(thisInfo.DayStats, thisDay)
+
+		}
+		thisInfo.DailyAverage = tmpCoins / (float64(nDays) - 1.0)
+		thisInfo.HourlyAverage = thisInfo.DailyAverage / 24.0
+		thisInfo.WinPercent = tmpPerc / (float64(nDays) - 1.0)
+
+		nHours := len(stats.HourlyStats)
+
+		for j := 0; j < nHours; j++ {
+			var thisHour HourStatTX
+			thisHour.Hour = stats.HourlyStats[j].Hour
+			thisHour.CoinCount = float64(stats.HourlyStats[j].Coins)
+			thisHour.CoinsPerMinute = float64(stats.HourlyStats[j].Coins) * (1.0 / 60.0)
+			thisInfo.HourStats = append(thisInfo.HourStats, thisHour)
 		}
 
-		dayStatsTX = append(dayStatsTX, thisDay)
-
-	}
-	overallInfoTX.DailyAverage = tmpCoins / (float64(nDays) - 1.0)
-	overallInfoTX.HourlyAverage = overallInfoTX.DailyAverage / 24.0
-	overallInfoTX.WinPercent = tmpPerc / (float64(nDays) - 1.0)
-
-	nHours := len(addrStats.HourlyStats)
-
-	hourStatsTX = nil
-	for j := 0; j < nHours; j++ {
-		var thisHour HourStatTX
-		thisHour.Hour = addrStats.HourlyStats[j].Hour
-		thisHour.CoinCount = float64(addrStats.HourlyStats[j].Coins)
-		thisHour.CoinsPerMinute = float64(addrStats.HourlyStats[j].Coins) * (1.0 / 60.0)
-		hourStatsTX = append(hourStatsTX, thisHour)
+		mutex.Lock()
+		overallInfoTX[userID] = thisInfo
+		mutex.Unlock()
 	}
 
 }

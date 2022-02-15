@@ -4,28 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
 )
-
-type Transaction struct {
-	Address       string  `json:"address"`
-	Category      string  `json:"category"`
-	Amount        float64 `json:"amount"`
-	Label         string  `json:"label"`
-	Confirmations int64   `json:"confirmations"`
-	Generated     bool    `json:"generated"`
-	Blockhash     string  `json:"blockhash"`
-	Blockheight   int64   `json:"blockheight"`
-	Blockindex    int64   `json:"blockindex"`
-	Blocktime     int64   `json:"blocktime"`
-	TXID          string  `json:"txid"`
-	dt            time.Time
-	Time          int64 `json:"time"`
-	TimeReceived  int64 `json:"timereceived"`
-}
 
 type OverallInfoTX struct {
 	DailyAverage       float64
@@ -34,9 +18,11 @@ type OverallInfoTX struct {
 	Projection         string
 	CurrentCoinsPerDay float64
 	NetHash            string
+	DayStats           []DayStatTX
+	HourStats          []HourStatTX
 }
 
-var overallInfoTX OverallInfoTX
+var overallInfoTX = make(map[int]OverallInfoTX)
 
 type DayStatTX struct {
 	Day          string
@@ -45,15 +31,11 @@ type DayStatTX struct {
 	WinPercent   float64
 }
 
-var dayStatsTX []DayStatTX
-
 type HourStatTX struct {
 	Hour           int
 	CoinCount      float64
 	CoinsPerMinute float64
 }
-
-var hourStatsTX []HourStatTX
 
 type AddrStatResponse struct {
 	HourlyStats []struct {
@@ -72,7 +54,8 @@ type AddrStatResponse struct {
 	NetHash             float64 `json:"NetHash"`
 }
 
-var addrStats AddrStatResponse
+// key is user id
+var addrStats = make(map[int]AddrStatResponse)
 
 /*
 http://dmo-monitor.com:9143/getminingstats
@@ -90,28 +73,48 @@ func txStats() {
 		Path:   "getminingstats",
 	}
 
-	myTime := time.Now()
-	_, myTzOffset := myTime.Zone()
+	for userID, addresses := range userIDList {
+		// Not really an error... some users may not have configured this.
+		if len(addresses.ReceivingAddresses) == 0 {
+			continue
+		}
 
-	var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","Addresses":"` + myConfig.AddrsToMonitor + `", "TZOffset": ` + strconv.Itoa(myTzOffset) + `, "NumDays": ` + strconv.Itoa(myConfig.DailyStatDays) + `}`)
-	req, err := http.NewRequest("GET", reqUrl.String(), data)
-	if err != nil {
-		return
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return
-	}
-	bodyText, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
+		var addrsToMonitor = ""
+		for _, address := range addresses.ReceivingAddresses {
+			addrsToMonitor += address.ReceivingAddress + ","
+		}
+		addrsToMonitor = addrsToMonitor[:len(addrsToMonitor)-1]
 
-	mutex.Lock()
-	if err := json.Unmarshal(bodyText, &addrStats); err != nil {
+		var thisAddrStat AddrStatResponse
+
+		myTime := time.Now()
+		_, myTzOffset := myTime.Zone()
+
+		var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","Addresses":"` + addrsToMonitor + `", "TZOffset": ` + strconv.Itoa(myTzOffset) + `, "NumDays": ` + strconv.Itoa(myConfig.DailyStatDays) + `}`)
+		req, err := http.NewRequest("GET", reqUrl.String(), data)
+		if err != nil {
+			log.Printf("Unable to make request to dmo-statservice: %s", err.Error())
+			continue
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("Unable to make request to dmo-statservice: %s", err.Error())
+			continue
+		}
+		bodyText, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Unable to make request to dmo-statservice: %s", err.Error())
+			continue
+		}
+
+		if err := json.Unmarshal(bodyText, &thisAddrStat); err != nil {
+			log.Printf("Unable to make request to dmo-statservice: %s", err.Error())
+			continue
+		}
+
+		mutex.Lock()
+		addrStats[userID] = thisAddrStat
 		mutex.Unlock()
-		return
 	}
-	mutex.Unlock()
 
 }

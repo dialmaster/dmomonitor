@@ -85,29 +85,28 @@ func statsPage(c *gin.Context) {
 			pVars.Totalminers += 1
 		}
 	}
-	mutex.Unlock()
 
 	pVars.PageTitle = "DMO Monitor"
-	pVars.NetHash = overallInfoTX.NetHash
+	pVars.NetHash = overallInfoTX[userID].NetHash
 
 	pVars.CurrentPrice = currentPricePerDMO
-	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay
-	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 7
-	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX.CurrentCoinsPerDay * 30
+	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX[userID].CurrentCoinsPerDay
+	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX[userID].CurrentCoinsPerDay * 7
+	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX[userID].CurrentCoinsPerDay * 30
 	pVars.VersionString = versionString
 
 	myMiners := make(map[string]mineRpc)
-	mutex.Lock()
 	for k, v := range minerList[cloudKey] {
 		myMiners[k] = v
 	}
-	mutex.Unlock()
 
 	pVars.MinerList = myMiners
 	pVars.Totalhash = totalHashG[cloudKey]
-	pVars.WalletOverallStats = overallInfoTX
-	pVars.WalletDailyStats = dayStatsTX
-	pVars.WalletHourlyStats = hourStatsTX
+	pVars.WalletOverallStats = overallInfoTX[userID]
+	pVars.WalletDailyStats = overallInfoTX[userID].DayStats
+	pVars.WalletHourlyStats = overallInfoTX[userID].HourStats
+	mutex.Unlock()
+
 	pVars.AutoRefresh = myConfig.AutoRefreshSeconds
 	pVars.DailyStatDays = myConfig.DailyStatDays
 
