@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -19,8 +18,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 )
-
-var features = map[string]bool{}
 
 var versionString = "v1.2.0"
 
@@ -43,10 +40,6 @@ var currentPricePerDMO = 0.0
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 
-	if features["FREE"] { // Don't want the console filled with gin garbage on the free version
-		gin.DefaultWriter = ioutil.Discard
-	}
-
 	router := gin.Default()
 
 	store := cookie.NewStore([]byte("secret"))
@@ -55,21 +48,17 @@ func main() {
 	router.Use(sessionMgr())
 
 	myConfig.getConf()
-	if myConfig.QuietMode {
-		fmt.Printf("Starting monitor in quiet mode (no console output). Access stats at http://localhost:%s/stats\n", myConfig.ServerPort)
-	}
+	fmt.Printf("Access stats at http://localhost:%s/stats\n", myConfig.ServerPort)
 
-	if features["MANAGEMENT"] {
-		db, dbErr = sql.Open("mysql", myConfig.DBUser+":"+myConfig.DBPass+"@tcp("+myConfig.DBIP+":"+myConfig.DBPort+")/"+myConfig.DBName)
+	db, dbErr = sql.Open("mysql", myConfig.DBUser+":"+myConfig.DBPass+"@tcp("+myConfig.DBIP+":"+myConfig.DBPort+")/"+myConfig.DBName)
 
-		// Truly a fatal error.
-		if dbErr != nil {
-			panic(dbErr.Error())
-		}
-		defer db.Close()
-		fmt.Printf("Connected to DB: %s\n", myConfig.DBName)
-		getAllUserInfo()
+	// Truly a fatal error.
+	if dbErr != nil {
+		panic(dbErr.Error())
 	}
+	defer db.Close()
+	fmt.Printf("Connected to DB: %s\n", myConfig.DBName)
+	getAllUserInfo()
 
 	if myConfig.MinerLateTime < 20 {
 		myConfig.MinerLateTime = 20
@@ -77,7 +66,6 @@ func main() {
 	if myConfig.DailyStatDays < 2 {
 		myConfig.DailyStatDays = 3
 	}
-	// Don't let people get too nuts here
 	if myConfig.DailyStatDays > 21 {
 		myConfig.DailyStatDays = 21
 	}
@@ -85,16 +73,12 @@ func main() {
 		myConfig.AutoRefreshSeconds = 10
 	}
 
-	if len(myConfig.AddrsToMonitor) > 0 {
-		txStats()
-	}
+	txStats()
 
 	go func() {
 		for {
 			getCoinGeckoDMOPrice()
-			if len(myConfig.AddrsToMonitor) > 0 {
-				txStats()
-			}
+			txStats()
 
 			updateMinerStatus()
 			time.Sleep(10 * time.Second)
@@ -105,24 +89,16 @@ func main() {
 	templ := template.Must(template.New("").ParseFS(tmplFS, "templates/*.html"))
 	router.SetHTMLTemplate(templ)
 
-	if features["FREE"] {
-		router.GET("/stats", statsPage)
-		router.POST("/minerstats", getMinerStatsRPC)
-		router.POST("/removeminer", removeLateMiner)
-	}
-
-	if features["MANAGEMENT"] {
-		router.GET("/", landingPage)
-		router.GET("/stats", checkLoggedIn(), statsPage)
-		router.GET("/account", checkLoggedIn(), accountPage)
-		router.POST("/changepass", checkLoggedIn(), doChangePass)
-		router.POST("/minerstats", checkBearer(), getMinerStatsRPC)
-		router.POST("/removeminer", checkLoggedIn(), removeLateMiner)
-		router.GET("/login", loginPage)
-		router.POST("/login", doLogin)
-		router.POST("/register", doRegister)
-		router.GET("/logout", doLogout)
-	}
+	router.GET("/", landingPage)
+	router.GET("/stats", checkLoggedIn(), statsPage)
+	router.GET("/account", checkLoggedIn(), accountPage)
+	router.POST("/changepass", checkLoggedIn(), doChangePass)
+	router.POST("/minerstats", checkBearer(), getMinerStatsRPC)
+	router.POST("/removeminer", checkLoggedIn(), removeLateMiner)
+	router.GET("/login", loginPage)
+	router.POST("/login", doLogin)
+	router.POST("/register", doRegister)
+	router.GET("/logout", doLogout)
 
 	router.Run(":" + myConfig.ServerPort)
 }

@@ -1,16 +1,11 @@
-  #### REQUIRED PARAMS
-  # The port THIS dmo-monitor will use on this computer. 
+# The port dmo-monitor will use on this computer.
 ServerPort: 11235
 
-## Set these to your DB connection info: (management version only)
 DBUser: username
 DBPass: password
 DBPort: 3306
 DBName: DBNAME
 DBIP: 127.0.0.1
-# Bearer token for management requests. NOT CURRENTLY USED
-AuthToken: 
-## END management version only section
 
   #### END REQUIRED PARAMS
 
@@ -32,14 +27,3 @@ DailyStatDays: 5
   # This line will look like this if you add your user id: TelegramUserId: 34532453252
   # To get your user id from telegram, just send a message to @userinfobot
 TelegramUserId:  
-
-  #### Mining Receiving address stats
-  # Put a comma delimited list of receiving addresses that you are mining to here to get stats
-  # like coins per hour, coins per day, ect... leave blank and you will not see a stats section for this.
-  # Example:
-  #AddrsToMonitor: dy1qslmdwmx4g95s57clggn2c6j0g70leer7a2g93d,dy1q43uwgyrzragqzvlfaxrvflywdv75dsxk7qyvyc
-AddrsToMonitor: 
-
-  # Set to true to disable most console output
-QuietMode: false
-
