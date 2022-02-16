@@ -1,35 +1,53 @@
-.userinfo-container {
-    margin: 0px 20px;
-}
 
-.userinfo {
-    border: 3px solid #f1f1f1;
-    padding: 10px 20px 10px 20px;
-    line-height: 40px;
-}
+  #cloud-key {
+    word-wrap: break-word;
+    margin: 10px 0 0 0;
+    font-size: 23px;
+  }
 
-h4 {
-    margin: 40px 0px 10px 15px;
-}
+  .account-header {
+    width: 100%;
+    text-align: center;
+    font-size: 36px;
+  }
 
-/* Bordered form */
-form {
-    border: 3px solid #f1f1f1;
+  .account-container {
+    margin-top: 20px;
+    border: 1px solid #000;
+    background-color: #DDD;
+  }
+
+  .account-container-head {
+    background-color: #EEE;
+    padding: 15px;
+    font-weight: bold;
+    
+  }
+
+  .account-info {
+    margin-top: 15px;
+  }
+
+  .account-container-block {
+    padding: 15px;
+  }
+  
+  .account-form {
     padding: 10px 20px 10px 20px;
   }
   
   /* Full-width inputs */
-  input[type=text], input[type=password] {
+  .account-form input[type=text], .account-form input[type=password] {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
     display: inline-block;
-    border: 1px solid #ccc;
+    border: 1px solid #222;
     box-sizing: border-box;
   }
   
   /* Set a style for all buttons */
-  button {
+  .account-form button {
     background-color: #04AA6D;
     color: white;
     padding: 14px 20px;
@@ -44,22 +62,25 @@ form {
     opacity: 0.8;
   }
 
-  /* Add padding to containers */
-  .container {
-    padding: 16px;
-  }
   
 
   @media screen and (max-device-width: 600px) {
-    .container, h4 {
+    .account-header {
+      font-size: 48px;
+      padding-top: 30px;
+    }
+    .account-container-head {
       font-size: 40px;
     }
-    input[type=text], input[type=password], button {
+    .account-container-block {
+      font-size: 39px;
+    }
+    .account-form input[type=text], .account-form input[type=password], .account-form button {
       font-size: 40px;
       margin-bottom:24px;
       height: 90px;
     }
-    button {
+    .account-form button {
       height: 96px;
     }
   }

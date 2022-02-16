@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html"
 	"net/http"
 	"time"
 
@@ -38,7 +39,7 @@ func accountPage(c *gin.Context) {
 	userID := session.Get("ID").(int)
 	pVars.PageTitle = "DMO Monitor and Management"
 	pVars.UserName = userIDList[userID].UserName
-	pVars.CloudKey = userIDList[userID].CloudKey
+	pVars.CloudKey = html.EscapeString(userIDList[userID].CloudKey)
 	errInterface, found := c.Get("errors")
 	if found {
 		pVars.Errors = errInterface.([]string)

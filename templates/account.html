@@ -1,7 +1,7 @@
 <html>
     <head>
-    {{template "sitehead" .}}
-    <link href="/static/css/account.css" rel="stylesheet" />
+        {{template "sitehead" .}}
+        <link href="/static/css/account.css" rel="stylesheet" />
     </head>
     <body data-Timer="{{.AutoRefresh}}">
         {{template "header" .}}
@@ -9,40 +9,41 @@
         {{template "sidenav" .}}
 
         <div class="page-container">
-            <br />
-            <br />
-            <center><h1>My Account</h1></center>
-            <div class="userinfo-container">
-                <h4>User Information</h4>
-                <div class="userinfo">
-                    <div id="username"><b>User Name:</b> {{ .UserName }}</div>
-                    <div id="cloudkey"><b>Cloud Key:</b> {{ .CloudKey }}</div>
+            <div class="account-header">My Account</div>
+
+            <div class="account-container">
+                <div class="account-container-head">Account Information</div>
+                <div class="account-container-block">
+                    <div class="account-info"><b>User Name:</b> {{ .UserName }}</div>
+                    <div class="account-info"><b>Cloud Key:</b> <span id="cloud-key">{{ .CloudKey }}</span></div>
+                </div>
+                
+            </div>
+
+            <div class="account-container">
+                <div class="account-container-head">Password</div>
+                <div class="account-container-block">
+                    <form action="/changepass" method="post" class="account-form">
+                        <label for="psw">Old Password</label>
+                        <input type="password" placeholder="" name="psw" required>
+
+                        <label for="newpsw">New Password</label>
+                        <input type="password" placeholder="" name="newpsw" required>
+
+                        <label for="confirmnewpsw">Confirm New Password</label>
+                        <input type="password" placeholder="" name="confirmnewpsw" required>
+
+                        <button type="submit">Change Password</button>
+                    </form>
                 </div>
             </div>
-            <div class="container">
-                <h4>Change Password</h4>
-                <form action="/changepass" method="post">
-  
-                <label for="psw"><b>Old Password</b></label>
-                <input type="password" placeholder="Old Password" name="psw" required>
-  
-                <label for="newpsw"><b>New Password</b></label>
-                <input type="password" placeholder="New Password" name="newpsw" required>
+            {{if .Errors }}
+            {{range $idx, $error := .Errors}}
+            <div class="error">{{$error}}</div>
+            {{end}}
+            {{end}}
 
-                <label for="confirmnewpsw"><b>Confirm New Password</b></label>
-                <input type="password" placeholder="Confirm New Password" name="confirmnewpsw" required>
-                
-                <button type="submit">Submit</button>
-              </form>
-              </div>
-              {{if .Errors }}
-              {{range $idx, $error := .Errors}}
-              <div class="error">{{$error}}</div>
-              {{end}}
-              {{end}}
-        
         </div>
-        
 
         {{template "footer" .}}
       
