@@ -31,6 +31,8 @@ type pageVars struct {
 	CloudKey           string
 	UserName           string
 	Errors             []string
+	Addresses          string
+	TelegramUserID     string
 }
 
 func accountPage(c *gin.Context) {
@@ -40,10 +42,17 @@ func accountPage(c *gin.Context) {
 	pVars.PageTitle = "DMO Monitor and Management"
 	pVars.UserName = userIDList[userID].UserName
 	pVars.CloudKey = html.EscapeString(userIDList[userID].CloudKey)
+	pVars.TelegramUserID = userIDList[userID].TelegramUserId
 	errInterface, found := c.Get("errors")
 	if found {
 		pVars.Errors = errInterface.([]string)
 	}
+
+	pVars.Addresses = ""
+	for _, address := range userIDList[userID].ReceivingAddresses {
+		pVars.Addresses += address.ReceivingAddress + ","
+	}
+	pVars.Addresses = pVars.Addresses[:len(pVars.Addresses)-1]
 
 	c.HTML(http.StatusOK, "account.html", pVars)
 }

@@ -13,11 +13,40 @@
 
             <div class="account-container">
                 <div class="account-container-head">Account Information</div>
+                <div class="account-container-help">Cloud key for connecting dmo-wrapminer</div>
                 <div class="account-container-block">
                     <div class="account-info"><b>User Name:</b> {{ .UserName }}</div>
                     <div class="account-info"><b>Cloud Key:</b> <span id="cloud-key">{{ .CloudKey }}</span></div>
                 </div>
                 
+            </div>
+
+            <div class="account-container">
+                <div class="account-container-head">Mining Statistics Address</div>
+                <div class="account-container-help">For coins per day, hour, etc on monitor page</div>
+                <div class="account-container-block">
+                    <form action="/doupdateaddrs" method="post" class="account-form">
+                        <label for="addrs">Receiving Address</label>
+                        
+                        <input type="text" value="{{ .Addresses }}" name="addrs" required>
+
+                        <button type="submit">Update Addresses</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="account-container">
+                <div class="account-container-head">Telegram User ID</div>
+                <div class="account-container-help">For realtime miner offline notifications</div>
+                <div class="account-container-block">
+                    <form action="/doupdatetelegramid" method="post" class="account-form">
+                        <label for="telegram_id">Telegram User ID</label>
+                        
+                        <input type="text" value="{{ .TelegramUserID }}" name="telegram_id" required>
+
+                        <button type="submit">Update Telegram ID</button>
+                    </form>
+                </div>
             </div>
 
             <div class="account-container">
@@ -37,6 +66,10 @@
                     </form>
                 </div>
             </div>
+
+
+
+            
             {{if .Errors }}
             {{range $idx, $error := .Errors}}
             <div class="error">{{$error}}</div>

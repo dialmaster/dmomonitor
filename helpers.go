@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -35,6 +36,9 @@ func getCoinGeckoDMOPrice() {
 	}
 
 	req, err := http.NewRequest("GET", reqUrl.String()+"?ids=dynamo-coin&vs_currencies=USD", nil)
+	if err != nil {
+		log.Printf("Unable to update price data from coinGecko\n")
+	}
 
 	type geckoPrice struct {
 		DynamoCoin struct {
@@ -45,25 +49,28 @@ func getCoinGeckoDMOPrice() {
 	resp, err := client.Do(req)
 	// Sometimes the coingecko api call fails, and we do not want that to kill our app...
 	if err != nil {
+		log.Printf("Unable to update price data from coinGecko\n")
 		return
 	}
 	bodyText, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Printf("Unable to update price data from coinGecko\n")
 		return
 	}
 
 	var myGeckoPrice geckoPrice
 
 	if err := json.Unmarshal(bodyText, &myGeckoPrice); err != nil {
+		log.Printf("Unable to update price data from coinGecko\n")
 		return
 	}
 
 	currentPricePerDMO = myGeckoPrice.DynamoCoin.Usd
 }
 
-func sendOfflineNotificationToTelegram(minerName string) {
+func sendOfflineNotificationToTelegram(minerName string, telegramUserID string) {
 	params := url.Values{}
-	params.Add("chat_id", myConfig.TelegramUserId)
+	params.Add("chat_id", telegramUserID)
 	params.Add("text", "Your miner '"+minerName+"' is offline")
 	body := strings.NewReader(params.Encode())
 

@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -54,7 +55,8 @@ func main() {
 
 	// Truly a fatal error.
 	if dbErr != nil {
-		panic(dbErr.Error())
+		log.Printf("Unable to connect to DB: %s", dbErr.Error())
+		os.Exit(1)
 	}
 	defer db.Close()
 	fmt.Printf("Connected to DB: %s\n", myConfig.DBName)
@@ -73,13 +75,26 @@ func main() {
 		myConfig.AutoRefreshSeconds = 10
 	}
 
+	getCoinGeckoDMOPrice()
 	txStats()
+	updateMinerStatus()
 
 	go func() {
 		for {
 			getCoinGeckoDMOPrice()
-			txStats()
+			time.Sleep(240 * time.Second)
+		}
+	}()
 
+	go func() {
+		for {
+			txStats()
+			time.Sleep(60 * time.Second)
+		}
+	}()
+
+	go func() {
+		for {
 			updateMinerStatus()
 			time.Sleep(10 * time.Second)
 		}
@@ -98,8 +113,11 @@ func main() {
 	router.GET("/login", loginPage)
 	router.POST("/login", doLogin)
 	router.POST("/register", doRegister)
+	router.POST("/doupdatetelegramid", doUpdateTelegramID)
+	router.POST("/doupdateaddrs", doUpdateAddrs)
 	router.GET("/logout", doLogout)
 
+	log.Printf("Starting server!\n")
 	router.Run(":" + myConfig.ServerPort)
 }
 
@@ -185,8 +203,9 @@ func updateMinerStatus() {
 				if howLong.Seconds() > myConfig.MinerLateTime && !stats.Late {
 					stats.Late = true
 					myMinerList[name] = stats
-					if len(myConfig.TelegramUserId) > 0 {
-						sendOfflineNotificationToTelegram(name)
+
+					if len(cloudKeyList[cloudKey].TelegramUserId) > 0 {
+						sendOfflineNotificationToTelegram(name, cloudKeyList[cloudKey].TelegramUserId)
 					}
 				} else if howLong.Seconds() <= myConfig.MinerLateTime {
 					stats.Late = false

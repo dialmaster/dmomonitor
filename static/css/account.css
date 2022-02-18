@@ -15,6 +15,7 @@
     margin-top: 20px;
     border: 1px solid #000;
     background-color: #DDD;
+    box-shadow: 0 0 20px rgb(0 0 0 / 40%);
   }
 
   .account-container-head {
@@ -26,14 +27,22 @@
 
   .account-info {
     margin-top: 15px;
+    font-size: 24px;
   }
 
   .account-container-block {
-    padding: 15px;
+    padding: 0px 15px 15px 15px;
   }
   
+  .account-container-help {
+    font-style: italic;
+    margin: 10px 0px 0px 15px;
+    color: #080;
+  }
+
   .account-form {
     padding: 10px 20px 10px 20px;
+    margin-block-end: 0;
   }
   
   /* Full-width inputs */
@@ -55,6 +64,7 @@
     border: none;
     cursor: pointer;
     width: 100%;
+    font-size: 20px;
   }
   
   /* Add a hover effect for buttons */
@@ -70,18 +80,24 @@
       padding-top: 30px;
     }
     .account-container-head {
-      font-size: 40px;
+      font-size: 36px;
     }
     .account-container-block {
-      font-size: 39px;
+      font-size: 32px;
     }
     .account-form input[type=text], .account-form input[type=password], .account-form button {
-      font-size: 40px;
+      font-size: 36px;
       margin-bottom:24px;
       height: 90px;
     }
     .account-form button {
-      height: 96px;
+      height: 88px;
+    }
+    .account-form label {
+      font-size: 36px;
+    }
+    .account-info {
+      font-size: 28px;
     }
   }
   

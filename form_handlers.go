@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -30,6 +32,80 @@ func removeLateMiner(c *gin.Context) {
 	mutex.Unlock()
 }
 
+func doUpdateTelegramID(c *gin.Context) {
+	session := sessions.Default(c)
+	userID := session.Get("ID").(int)
+	telegramID := c.PostForm("telegram_id")
+	log.Printf("Updating telegram id for user %d to %s\n", userID, telegramID)
+
+	var formErrors []string
+
+	valid := len(telegramID) >= 8
+	if !valid {
+		formErrors = append(formErrors, "Telegram ID must have minimum eight digits")
+	}
+
+	_, err := strconv.Atoi(telegramID)
+	if err != nil {
+		formErrors = append(formErrors, "Telegram ID must be numeric")
+	}
+	if len(formErrors) > 0 {
+		c.Set("errors", formErrors)
+		accountPage(c)
+	}
+
+	_, err = db.Exec("UPDATE users SET telegram_user_id = ? WHERE ID = ?", telegramID, userID)
+
+	if err != nil {
+		formErrors = append(formErrors, "Update telegram user id failed")
+	} else {
+		formErrors = append(formErrors, "Telegram user id update successful")
+		getAllUserInfo()
+	}
+
+	if len(formErrors) > 0 {
+		c.Set("errors", formErrors)
+		accountPage(c)
+	}
+
+}
+
+func doUpdateAddrs(c *gin.Context) {
+	session := sessions.Default(c)
+	userID := session.Get("ID").(int)
+	addr := c.PostForm("addrs")
+	var formErrors []string
+
+	count := 0
+
+	err := db.QueryRow("SELECT COUNT(*) FROM receiving_addresses where user_id = ?", userID).Scan(&count)
+	if err != nil {
+		log.Printf("Failed to get count of receiving addresses for user_id %d", userID)
+		formErrors = append(formErrors, "Failed to update receiving address")
+		log.Printf("Failed to update receiving address in DB for user id %d: %s", userID, err.Error())
+		c.Set("errors", formErrors)
+		accountPage(c)
+	}
+
+	if count > 0 {
+		_, err = db.Exec("UPDATE receiving_addresses SET receiving_address = ? WHERE user_id = ?", addr, userID)
+	} else {
+		_, err = db.Exec("INSERT INTO receiving_addresses (user_id, receiving_address) values (?, ?)", userID, addr)
+	}
+
+	if err != nil {
+		formErrors = append(formErrors, "Failed to update receiving address")
+		log.Printf("Failed to update receiving address in DB for user id %d: %s", userID, err.Error())
+	} else {
+		formErrors = append(formErrors, "Receiving address updated")
+		getAllUserInfo()
+		txStats()
+	}
+	c.Set("errors", formErrors)
+	accountPage(c)
+
+}
+
 func doChangePass(c *gin.Context) {
 	session := sessions.Default(c)
 	userID := session.Get("ID").(int)
@@ -51,6 +127,11 @@ func doChangePass(c *gin.Context) {
 
 	if !CheckPasswordHash(oldpass, userIDList[userID].PasswordHash) {
 		formErrors = append(formErrors, "You must correctly enter your old password to update your password")
+	}
+
+	if len(formErrors) > 0 {
+		c.Set("errors", formErrors)
+		accountPage(c)
 	}
 
 	passHash, _ := HashPassword(newpass)

@@ -20,10 +20,3 @@ MinerLateTime: 20
   # The number of days back that you want to show daily stats for. Defaults to 4 if not set.
   # Min is 1, max is 21
 DailyStatDays: 5
-
-  # Used to send notifications when your miners go offline via telegram
-  # You will need to put YOUR telegram user id here AND you will need to /start a conversation with @dmo_monitor_bot
-  # Leave this blank if you do not want to set this up
-  # This line will look like this if you add your user id: TelegramUserId: 34532453252
-  # To get your user id from telegram, just send a message to @userinfobot
-TelegramUserId:  
