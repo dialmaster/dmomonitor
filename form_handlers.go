@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -90,7 +89,7 @@ func doUpdateAddrs(c *gin.Context) {
 	if count > 0 {
 		_, err = db.Exec("UPDATE receiving_addresses SET receiving_address = ? WHERE user_id = ?", addr, userID)
 	} else {
-		_, err = db.Exec("INSERT INTO receiving_addresses (user_id, receiving_address) values (?, ?)", userID, addr)
+		_, err = db.Exec("INSERT INTO receiving_addresses (user_id, receiving_address, display_name) values (?, ?, 'Default Address')", userID, addr)
 	}
 
 	if err != nil {
@@ -206,7 +205,6 @@ func doLogin(c *gin.Context) {
 	username := c.PostForm("uname")
 	password := c.PostForm("psw")
 
-	fmt.Printf("Posted form with username: %s and password %s\n", username, password)
 	var formErrors []string
 
 	if !CheckPasswordHash(password, userList[username].PasswordHash) {

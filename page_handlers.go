@@ -52,7 +52,9 @@ func accountPage(c *gin.Context) {
 	for _, address := range userIDList[userID].ReceivingAddresses {
 		pVars.Addresses += address.ReceivingAddress + ","
 	}
-	pVars.Addresses = pVars.Addresses[:len(pVars.Addresses)-1]
+	if len(pVars.Addresses) > 1 {
+		pVars.Addresses = pVars.Addresses[:len(pVars.Addresses)-1]
+	}
 
 	c.HTML(http.StatusOK, "account.html", pVars)
 }
