@@ -2,6 +2,15 @@
     <head>
         {{template "sitehead" .}}
         <link href="/static/css/account.css" rel="stylesheet" />
+        <link href="/static/css/jquery-ui.css" rel="stylesheet" />
+        <script>
+            $(function() {
+               $( "#accordion-1" ).accordion({
+               collapsible: true,
+               heightStyle: 'content'
+            });
+            });
+         </script>
     </head>
     <body data-Timer="{{.AutoRefresh}}">
         {{template "header" .}}
@@ -12,7 +21,7 @@
             <div class="account-header">My Account</div>
 
             <div class="account-container">
-                <div class="account-container-head">Account Information</div>
+                <div class="account-container-head">Basic Account Information</div>
                 <div class="account-container-help">Cloud key for connecting dmo-wrapminer</div>
                 <div class="account-container-block">
                     <div class="account-info"><b>User Name:</b> {{ .UserName }}</div>
@@ -21,36 +30,32 @@
                 
             </div>
 
-            <div class="account-container">
-                <div class="account-container-head">Mining Statistics Address</div>
-                <div class="account-container-help">For coins per day, hour, etc on monitor page</div>
+            <div class="account-container" id="accordion-1">
+                <h3 class="account-container-head">Mining Statistics Address</h3>
                 <div class="account-container-block">
+                    <div class="account-container-help">For coins per day, hour, etc on monitor page</div>
                     <form action="/doupdateaddrs" method="post" class="account-form">
                         <label for="addrs">Receiving Address</label>
                         
                         <input type="text" value="{{ .Addresses }}" name="addrs" required>
 
-                        <button type="submit">Update Addresses</button>
+                        <button type="submit" class="account-submit">Update Address</button>
                     </form>
                 </div>
-            </div>
 
-            <div class="account-container">
-                <div class="account-container-head">Telegram User ID</div>
-                <div class="account-container-help">For realtime miner offline notifications</div>
+                <h3 class="account-container-head">Telegram User ID</h3>
                 <div class="account-container-block">
+                    <div class="account-container-help">For realtime miner offline notifications</div>
                     <form action="/doupdatetelegramid" method="post" class="account-form">
                         <label for="telegram_id">Telegram User ID</label>
                         
                         <input type="text" value="{{ .TelegramUserID }}" name="telegram_id" required>
 
-                        <button type="submit">Update Telegram ID</button>
+                        <button type="submit"  class="account-submit">Update Telegram ID</button>
                     </form>
                 </div>
-            </div>
 
-            <div class="account-container">
-                <div class="account-container-head">Password</div>
+                <h3 class="account-container-head">Password</h3>
                 <div class="account-container-block">
                     <form action="/changepass" method="post" class="account-form">
                         <label for="psw">Old Password</label>
@@ -62,11 +67,10 @@
                         <label for="confirmnewpsw">Confirm New Password</label>
                         <input type="password" placeholder="" name="confirmnewpsw" required>
 
-                        <button type="submit">Change Password</button>
+                        <button type="submit"  class="account-submit">Change Password</button>
                     </form>
                 </div>
             </div>
-
 
 
             

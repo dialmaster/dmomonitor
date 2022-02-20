@@ -10,7 +10,6 @@ import (
 
 type conf struct {
 	ServerPort         string  `yaml:"ServerPort"`
-	TelegramUserId     string  `yaml:"TelegramUserId"`
 	MinerLateTime      float64 `yaml:"MinerLateTime"`
 	AutoRefreshSeconds int     `yaml:"AutoRefreshSeconds"`
 	DailyStatDays      int     `yaml:"DailyStatDays"`

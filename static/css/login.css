@@ -35,6 +35,9 @@ form {
     padding: 16px;
   }
   
+  .login-button {
+    font-size: 22px;
+  }
 
   @media screen and (max-device-width: 600px) {
     .container {
@@ -45,6 +48,10 @@ form {
       margin-bottom:24px;
       height: 90px;
     }
+    .login-button {
+      font-size: 40px;
+    }
+  
     button {
       height: 96px;
     }

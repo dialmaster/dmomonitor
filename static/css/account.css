@@ -3,7 +3,26 @@
     word-wrap: break-word;
     margin: 10px 0 0 0;
     font-size: 23px;
+    background-color:#EEE;
   }
+
+  #accordion-1 {
+    margin-top: 20px;
+  }
+
+  .account-container-block.ui-accordion-content {
+    padding: 0px 15px 15px 15px !important;
+  }
+  .ui-accordion-header-icon.ui-icon {
+    -ms-transform: scale(2); /* IE 9 */
+    -webkit-transform: scale(2); /* Chrome, Safari, Opera */
+    transform: scale(2);
+    margin-right: 10px;
+  }
+  h3.account-container-head {
+    margin: 5px 0 5px 0 !important;
+  }
+
 
   .account-header {
     width: 100%;
@@ -90,8 +109,9 @@
       margin-bottom:24px;
       height: 90px;
     }
-    .account-form button {
+    .account-form button.account-submit {
       height: 88px;
+      font-size: 36px;
     }
     .account-form label {
       font-size: 36px;
