@@ -39,7 +39,7 @@ func accountPage(c *gin.Context) {
 	var pVars pageVars
 	session := sessions.Default(c)
 	userID := session.Get("ID").(int)
-	pVars.PageTitle = "DMO Monitor and Management"
+	pVars.PageTitle = "DMO Monitor - My Account"
 	pVars.UserName = userIDList[userID].UserName
 	pVars.CloudKey = html.EscapeString(userIDList[userID].CloudKey)
 	pVars.TelegramUserID = userIDList[userID].TelegramUserId
@@ -62,7 +62,7 @@ func accountPage(c *gin.Context) {
 func loginPage(c *gin.Context) {
 	session := sessions.Default(c)
 	var pVars pageVars
-	pVars.PageTitle = "DMO Monitor and Management"
+	pVars.PageTitle = "DMO Monitor - Login"
 	pVars.Guest = session.Get("guest").(bool)
 
 	errInterface, found := c.Get("errors")
@@ -98,14 +98,13 @@ func statsPage(c *gin.Context) {
 		}
 	}
 
-	pVars.PageTitle = "DMO Monitor"
+	pVars.PageTitle = "DMO Monitor - Statistics"
 	pVars.NetHash = overallInfoTX[userID].NetHash
 
 	pVars.CurrentPrice = currentPricePerDMO
 	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX[userID].CurrentCoinsPerDay
 	pVars.DollarsPerWeek = currentPricePerDMO * overallInfoTX[userID].CurrentCoinsPerDay * 7
 	pVars.DollarsPerMonth = currentPricePerDMO * overallInfoTX[userID].CurrentCoinsPerDay * 30
-	pVars.VersionString = versionString
 
 	myMiners := make(map[string]mineRpc)
 	for k, v := range minerList[cloudKey] {
