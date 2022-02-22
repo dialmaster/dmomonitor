@@ -197,7 +197,7 @@ func doRegister(c *gin.Context) {
 	session.Set("guest", false)
 	session.Save()
 
-	c.Redirect(http.StatusFound, "/")
+	c.Redirect(http.StatusFound, "/account")
 
 }
 

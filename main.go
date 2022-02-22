@@ -35,7 +35,7 @@ func main() {
 	router := gin.Default()
 
 	store := cookie.NewStore([]byte("secret"))
-	store.Options(sessions.Options{MaxAge: 60 * 60 * 24}) // expire in a day
+	store.Options(sessions.Options{MaxAge: 60 * 60 * 24 * 7}) // expire in 7 days
 	router.Use(sessions.Sessions("mysession", store))
 	router.Use(sessionMgr())
 
@@ -95,6 +95,7 @@ func main() {
 	router.LoadHTMLGlob("templates/*.html")
 
 	router.GET("/", landingPage)
+	router.GET("/wrapminer", wrapMiner)
 	router.GET("/stats", checkLoggedIn(), statsPage)
 	router.GET("/account", checkLoggedIn(), accountPage)
 	router.POST("/changepass", checkLoggedIn(), doChangePass)

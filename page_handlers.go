@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html"
 	"net/http"
 	"time"
@@ -79,8 +78,16 @@ func landingPage(c *gin.Context) {
 	pVars.Guest = session.Get("guest").(bool)
 	pVars.PageTitle = "DMO Monitor and Management"
 
-	fmt.Printf("landingPage: count %s!", c.GetString("count_val"))
 	c.HTML(http.StatusOK, "landing.html", pVars)
+}
+
+func wrapMiner(c *gin.Context) {
+	var pVars pageVars
+	session := sessions.Default(c)
+	pVars.Guest = session.Get("guest").(bool)
+	pVars.PageTitle = "DMO-Wrapminer"
+
+	c.HTML(http.StatusOK, "wrapminer.html", pVars)
 }
 
 func statsPage(c *gin.Context) {

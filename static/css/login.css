@@ -1,3 +1,7 @@
+a#login-nav {
+  color: #FFF !important;
+}
+
 /* Bordered form */
 form {
     border: 3px solid #f1f1f1;

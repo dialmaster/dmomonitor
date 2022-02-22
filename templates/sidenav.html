@@ -2,11 +2,12 @@
 <div id="sidenav">
     <div class="close_hamburger" onclick="hamburgerClick()"></div>
     <ul class="nav">
-      <li><a href="/">Home</a></li>
-      {{if .Guest}}<li><a href="/login">Login/Register</a></li>{{else}}
+      <li><a href="/" id="home-nav">Home</a></li>
+      {{if .Guest}}<li><a href="/login" id="login-nav">Login/Register</a></li>{{else}}
       <li><a href="/logout">Logout</a></li>
-      <li><a href="/stats">Mining Monitor</a></li>
-      <li><a href="/account">My Account</a></li>{{end}}
+      <li><a href="/stats" id="stats-nav">Mining Monitor</a></li>
+      <li><a href="/account" id="account-nav">My Account</a></li>{{end}}
+      <li><a href="/wrapminer" id="wrapminer-nav">Wrapminer</a></li>
     </ul>
   </div>
 {{end}}

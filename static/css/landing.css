@@ -1,4 +1,12 @@
-.free-miner-info-container {
+  a#home-nav {
+    color: #FFF !important;
+  }
+.oldversion-note {
+    margin-top: 50px;
+    font-size: smaller;
+  }
+
+  .free-miner-info-container {
     display: inline-block;
     margin: 15px;
   }
@@ -33,5 +41,11 @@
     .free-app-info {
       
       font-size: 24px;
+    }
+    .free-app-info.section-2 {
+      width: 100%;
+      font-size: 12px;
+      margin-top: 25px;
+      line-height: 28px;
     }
   }
