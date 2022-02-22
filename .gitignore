@@ -1,6 +1,7 @@
 *.exe
 myconfig.yaml
 release/
+static/dmo-wrapminer
 dmo-monitor
 migrations/goose_up.sh
 migrations/goose_down.sh
