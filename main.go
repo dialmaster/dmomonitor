@@ -2,10 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"embed"
 	"fmt"
-	"html/template"
-	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -21,12 +18,6 @@ import (
 )
 
 var versionString = "v1.2.0"
-
-//go:embed templates/**
-var tmplFS embed.FS
-
-//go:embed static/**
-var staticFS embed.FS
 
 var db *sql.DB
 var dbErr error
@@ -100,9 +91,8 @@ func main() {
 		}
 	}()
 
-	router.StaticFS("/static", myStaticFS())
-	templ := template.Must(template.New("").ParseFS(tmplFS, "templates/*.html"))
-	router.SetHTMLTemplate(templ)
+	router.Static("/static", "./static")
+	router.LoadHTMLGlob("templates/*.html")
 
 	router.GET("/", landingPage)
 	router.GET("/stats", checkLoggedIn(), statsPage)
@@ -177,16 +167,6 @@ func checkLoggedIn() gin.HandlerFunc {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 
 	}
-}
-
-func myStaticFS() http.FileSystem {
-	sub, err := fs.Sub(staticFS, "static")
-
-	if err != nil {
-		panic(err)
-	}
-
-	return http.FS(sub)
 }
 
 func updateMinerStatus() {
