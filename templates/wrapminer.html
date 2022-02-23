@@ -22,28 +22,37 @@
             <div class="wrapminer-info">
             <br /><br />
 
-            Once you have created an account, you will need to run your miners using dmo-wrapminer in order to take advantage of the monitoring capabilities.
+            <i>Once you create an account, you will need to run your miners with dmo-wrapminer to take advantage of the miner monitoring.</i>
             <br /><br />
             Linux binary available <a href="/static/dmo-wrapminer/linux/dmo-wrapminer.tar.gz">HERE</a>.
             <br />
             Windows binary available <a href="/static/dmo-wrapminer/windows/dmowrapminer.zip">HERE</a>.
             <br /><br />
-            After you download this: <br />
-            1) Extract it into the same directory with your DynMiner executable.<br />
-            2) Update the .yaml configuration file that comes with it.<br />
-            3) Run it:<br />
-            <b><pre>dmo-wrapminer myconfig.yaml</pre></b>
+            <u>What it does:</u>
+            <ul>
+            <li>Acts as an intermediary between your miner and dmo-monitor.com.</li>
+            <li>Makes running your miner more reliable by auto- restarting if it dies.</li>
+            <li>Allows you to specify a time interval to restart your miner.</li>
+            <li>Manages your miner settings in an easy to edit config file.</li>
+            </ul>
 
             <br />
-            This mining wrapper:<br />
-            1) Acts as an intermediary between your miner and dmo-monitor.com.<br />
-            2) Makes running your miner more reliable by auto- restarting if it dies.<br />
-            3) Allows you to specify a time interval to restart your miner.<br />
-            4) Manages your miner settings in an easy to edit config file.<br />
+            <u>How to use it:</u>
+            <ul>
+            <li>Extract it into the same directory with your DynMiner executable</li>   
+            <li>Update the .yaml configuration file that comes with it.</li>    
+            <li>Run it: <b>dmo-wrapminer myconfig.yaml</b></li>
+            </ul>
             <br />
 
-            In the future, this wrapper will also be what allows you to automatically make updates to your miner configurations, restart your miner
-            remotely, and deploy new versions of DynMiner directly from this site.
+            After the beta, this wrapper will be what allows you to remotely update your miner configurations, restart your miner, 
+            and deploy new versions of DynMiner directly from this site.
+            <br />
+            <br />
+            <b>Important Notes (beta):<br /></b>
+            Dmo-wrapminer currently only allows for ONE running instance of the wrapper per computer.
+            The MinerName is the unique key for what is displayed in dmo-monitor for each miner.
+            Each instance of dmo-wrapminer you run <i>must</i> be setup with it's own unique MinerName in the yaml config.
             </div>
         </div>
 
