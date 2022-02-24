@@ -10,6 +10,7 @@ type UserData struct {
 	ReceivingAddresses []ReceivingAddress
 	TelegramUserId     string
 	Paid               int
+	Admin              int
 }
 
 type ReceivingAddress struct {
@@ -25,7 +26,7 @@ var userIDList = make(map[int]UserData)
 
 // Get all users in the DB:
 func getAllUserInfo() {
-	results, err := db.Query("select password_hash, username, cloud_key, id, telegram_user_id, paid from users")
+	results, err := db.Query("select password_hash, username, cloud_key, id, telegram_user_id, paid, admin from users")
 
 	if err != nil {
 		log.Printf("Unable to get user data from DB\n")
@@ -34,7 +35,7 @@ func getAllUserInfo() {
 
 	for results.Next() {
 		var thisUser UserData
-		err = results.Scan(&thisUser.PasswordHash, &thisUser.UserName, &thisUser.CloudKey, &thisUser.ID, &thisUser.TelegramUserId, &thisUser.Paid)
+		err = results.Scan(&thisUser.PasswordHash, &thisUser.UserName, &thisUser.CloudKey, &thisUser.ID, &thisUser.TelegramUserId, &thisUser.Paid, &thisUser.Admin)
 		if err != nil {
 			log.Printf("Unable to read user from DB\n")
 			continue
