@@ -56,7 +56,8 @@ func doUpdateTelegramID(c *gin.Context) {
 	_, err = db.Exec("UPDATE users SET telegram_user_id = ? WHERE ID = ?", telegramID, userID)
 
 	if err != nil {
-		formErrors = append(formErrors, "Update telegram user id failed")
+		formErrors = append(formErrors, "Sorry, unable to update telegram id at this time")
+		log.Printf("Failed to update telegram id for user id %d, error: %s\n", userID, err.Error())
 	} else {
 		formErrors = append(formErrors, "Telegram user id update successful")
 		getAllUserInfo()
@@ -79,9 +80,8 @@ func doUpdateAddrs(c *gin.Context) {
 
 	err := db.QueryRow("SELECT COUNT(*) FROM receiving_addresses where user_id = ?", userID).Scan(&count)
 	if err != nil {
-		log.Printf("Failed to get count of receiving addresses for user_id %d", userID)
 		formErrors = append(formErrors, "Failed to update receiving address")
-		log.Printf("Failed to update receiving address in DB for user id %d: %s", userID, err.Error())
+		log.Printf("Failed to get count of receiving addresses in DB for user id %d: %s\n", userID, err.Error())
 		c.Set("errors", formErrors)
 		accountPage(c)
 	}
@@ -94,7 +94,7 @@ func doUpdateAddrs(c *gin.Context) {
 
 	if err != nil {
 		formErrors = append(formErrors, "Failed to update receiving address")
-		log.Printf("Failed to update receiving address in DB for user id %d: %s", userID, err.Error())
+		log.Printf("Failed to update receiving address in DB for user id %d: %s\n", userID, err.Error())
 	} else {
 		formErrors = append(formErrors, "Receiving address updated")
 		getAllUserInfo()
@@ -139,6 +139,7 @@ func doChangePass(c *gin.Context) {
 
 	if err != nil {
 		formErrors = append(formErrors, "Update password failed")
+		log.Printf("Failed to update password for user id %d: %s\n", userID, err.Error())
 	} else {
 		formErrors = append(formErrors, "Password updated")
 		getAllUserInfo()
@@ -178,6 +179,7 @@ func doRegister(c *gin.Context) {
 
 	if err != nil {
 		formErrors = append(formErrors, "Registration failed")
+		log.Printf("Registration insert failed for username %s: %s\n", username, err.Error())
 		c.Set("errors", formErrors)
 		loginPage(c)
 	}
@@ -209,6 +211,7 @@ func doLogin(c *gin.Context) {
 
 	if !CheckPasswordHash(password, userList[username].PasswordHash) {
 		formErrors = append(formErrors, "Login failed")
+		log.Printf("Login failed for user %s. Password hash did not match entered password\n", username)
 		c.Set("errors", formErrors)
 		loginPage(c)
 	}

@@ -37,7 +37,7 @@ func getCoinGeckoDMOPrice() {
 
 	req, err := http.NewRequest("GET", reqUrl.String()+"?ids=dynamo-coin&vs_currencies=USD", nil)
 	if err != nil {
-		log.Printf("Unable to update price data from coinGecko\n")
+		log.Printf("Unable to update price data from coinGecko: %s\n", err.Error())
 	}
 
 	type geckoPrice struct {
@@ -49,19 +49,19 @@ func getCoinGeckoDMOPrice() {
 	resp, err := client.Do(req)
 	// Sometimes the coingecko api call fails, and we do not want that to kill our app...
 	if err != nil {
-		log.Printf("Unable to update price data from coinGecko\n")
+		log.Printf("Unable to update price data from coinGecko: %s\n", err.Error())
 		return
 	}
 	bodyText, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Unable to update price data from coinGecko\n")
+		log.Printf("Unable to update price data from coinGecko: %s\n", err.Error())
 		return
 	}
 
 	var myGeckoPrice geckoPrice
 
 	if err := json.Unmarshal(bodyText, &myGeckoPrice); err != nil {
-		log.Printf("Unable to update price data from coinGecko\n")
+		log.Printf("Unable to update price data from coinGecko: %s\n", err.Error())
 		return
 	}
 
@@ -78,12 +78,14 @@ func sendOfflineNotificationToTelegram(minerName string, telegramUserID string) 
 
 	// For now leaving errors unhandled... if the telegram notification fails it's not really a huge deal
 	if err != nil {
+		log.Printf("Telegram notification failed for telegram user id %s: %s\n", telegramUserID, err.Error())
 		return
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		log.Printf("Failed to make request to telegram for telegram user id %s: %s\n", telegramUserID, err.Error())
 		return
 	}
 	defer resp.Body.Close()

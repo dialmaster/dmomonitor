@@ -28,11 +28,11 @@ func (myConfig *conf) getConf() *conf {
 
 	yamlFile, err := ioutil.ReadFile(myConfigFile)
 	if err != nil {
-		log.Printf("yamlFile.Get err   #%v ", err)
+		log.Fatalf("Error loading yaml config: #%v ", err)
 	}
 	err = yaml.Unmarshal(yamlFile, myConfig)
 	if err != nil {
-		log.Fatalf("Unmarshal: %v", err)
+		log.Fatalf("Error unmarshalling yaml config: %v", err)
 	}
 
 	return myConfig
