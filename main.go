@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 	"os"
@@ -94,14 +95,15 @@ func main() {
 	router.Static("/static", "./static")
 	router.LoadHTMLGlob("templates/*.html")
 
-	router.GET("/", landingPage)
-	router.GET("/wrapminer", wrapMiner)
-	router.GET("/stats", checkLoggedIn(), statsPage)
-	router.GET("/account", checkLoggedIn(), accountPage)
-	router.POST("/changepass", checkLoggedIn(), doChangePass)
+	router.GET("/", addPageVars(), landingPage)
+	router.GET("/wrapminer", addPageVars(), wrapMiner)
+	router.GET("/stats", checkLoggedIn(), addPageVars(), statsPage)
+	router.GET("/account", checkLoggedIn(), addPageVars(), accountPage)
+	router.GET("/admin", checkLoggedIn(), addPageVars(), adminPage)
+	router.POST("/changepass", checkLoggedIn(), addPageVars(), doChangePass)
 	router.POST("/minerstats", checkBearer(), getMinerStatsRPC)
-	router.POST("/removeminer", checkLoggedIn(), removeLateMiner)
-	router.GET("/login", loginPage)
+	router.POST("/removeminer", checkLoggedIn(), addPageVars(), removeLateMiner)
+	router.GET("/login", addPageVars(), loginPage)
 	router.POST("/login", doLogin)
 	router.POST("/register", doRegister)
 	router.POST("/doupdatetelegramid", doUpdateTelegramID)
@@ -152,6 +154,25 @@ func sessionMgr() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func addPageVars() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var pVars pageVars
+		session := sessions.Default(c)
+		userID := session.Get("ID").(int)
+		pVars.UserID = userID
+		pVars.UserName = userIDList[userID].UserName
+		pVars.CloudKey = html.EscapeString(userIDList[userID].CloudKey)
+		pVars.TelegramUserID = userIDList[userID].TelegramUserId
+		pVars.Guest = session.Get("guest").(bool)
+		pVars.Admin = userIDList[userID].Admin
+		pVars.Paid = userIDList[userID].Paid
+
+		c.Set("pVars", pVars)
+		c.Next()
+	}
+
 }
 
 func checkLoggedIn() gin.HandlerFunc {

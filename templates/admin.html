@@ -1,0 +1,28 @@
+<html>
+    <head>
+        {{template "sitehead" .}}
+        <link href="/static/css/jquery-ui.css" rel="stylesheet" />
+        <link href="/static/css/admin.css" rel="stylesheet" />
+        <script>
+            $(function() {
+               $( "#accordion-1" ).accordion({
+               collapsible: true,
+               heightStyle: 'content'
+            });
+            });
+         </script>
+    </head>
+    <body data-Timer="{{.AutoRefresh}}">
+        {{template "header" .}}
+
+        {{template "sidenav" .}}
+
+        <div class="page-container">
+            <h3>Admin Page</h3>
+        </div>
+
+        {{template "footer" .}}
+      
+    </body>
+  </html>
+

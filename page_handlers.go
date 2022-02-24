@@ -1,11 +1,10 @@
 package main
 
 import (
-	"html"
+	"log"
 	"net/http"
 	"time"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,23 +31,31 @@ type pageVars struct {
 	Errors             []string
 	Addresses          string
 	TelegramUserID     string
+	UserID             int
+	Admin              int
+	Paid               int
+}
+
+func getContextpVars(c *gin.Context) pageVars {
+	pVars, found := c.Get("pVars")
+	if !found {
+		log.Printf("Unable to get pVars for context. Shouldn't be possible!\n")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to get context for page"})
+	}
+	return pVars.(pageVars)
 }
 
 func accountPage(c *gin.Context) {
-	var pVars pageVars
-	session := sessions.Default(c)
-	userID := session.Get("ID").(int)
+	pVars := getContextpVars(c)
 	pVars.PageTitle = "DMO Monitor - My Account"
-	pVars.UserName = userIDList[userID].UserName
-	pVars.CloudKey = html.EscapeString(userIDList[userID].CloudKey)
-	pVars.TelegramUserID = userIDList[userID].TelegramUserId
+
 	errInterface, found := c.Get("errors")
 	if found {
 		pVars.Errors = errInterface.([]string)
 	}
 
 	pVars.Addresses = ""
-	for _, address := range userIDList[userID].ReceivingAddresses {
+	for _, address := range userIDList[pVars.UserID].ReceivingAddresses {
 		pVars.Addresses += address.ReceivingAddress + ","
 	}
 	if len(pVars.Addresses) > 1 {
@@ -59,10 +66,8 @@ func accountPage(c *gin.Context) {
 }
 
 func loginPage(c *gin.Context) {
-	session := sessions.Default(c)
-	var pVars pageVars
+	pVars := getContextpVars(c)
 	pVars.PageTitle = "DMO Monitor - Login"
-	pVars.Guest = session.Get("guest").(bool)
 
 	errInterface, found := c.Get("errors")
 	if found {
@@ -73,30 +78,34 @@ func loginPage(c *gin.Context) {
 }
 
 func landingPage(c *gin.Context) {
-	var pVars pageVars
-	session := sessions.Default(c)
-	pVars.Guest = session.Get("guest").(bool)
+	pVars := getContextpVars(c)
 	pVars.PageTitle = "DMO Monitor and Management"
 
 	c.HTML(http.StatusOK, "landing.html", pVars)
 }
 
 func wrapMiner(c *gin.Context) {
-	var pVars pageVars
-	session := sessions.Default(c)
-	pVars.Guest = session.Get("guest").(bool)
+	pVars := getContextpVars(c)
 	pVars.PageTitle = "DMO-Wrapminer"
 
 	c.HTML(http.StatusOK, "wrapminer.html", pVars)
 }
 
-func statsPage(c *gin.Context) {
-	session := sessions.Default(c)
-	userID := session.Get("ID").(int)
-	cloudKey := userIDList[userID].CloudKey
+func adminPage(c *gin.Context) {
+	pVars := getContextpVars(c)
+	if pVars.Admin != 1 {
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+	}
 
-	var pVars pageVars
-	pVars.Guest = session.Get("guest").(bool)
+	c.HTML(http.StatusOK, "admin.html", pVars)
+}
+
+func statsPage(c *gin.Context) {
+	pVars := getContextpVars(c)
+	pVars.PageTitle = "DMO Monitor - Statistics"
+
+	userID := pVars.UserID
+	cloudKey := userIDList[userID].CloudKey
 
 	mutex.Lock()
 	for _, stats := range minerList[cloudKey] {
@@ -105,7 +114,6 @@ func statsPage(c *gin.Context) {
 		}
 	}
 
-	pVars.PageTitle = "DMO Monitor - Statistics"
 	pVars.NetHash = overallInfoTX[userID].NetHash
 
 	pVars.CurrentPrice = currentPricePerDMO

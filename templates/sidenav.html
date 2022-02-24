@@ -4,6 +4,7 @@
     <ul class="nav">
       <li><a href="/" id="home-nav">Home</a></li>
       {{if .Guest}}<li><a href="/login" id="login-nav">Login/Register</a></li>{{else}}
+      {{if .Admin}}<li><a href="/admin" id="admin-nav">Admin</a></li>{{end}}
       <li><a href="/logout">Logout</a></li>
       <li><a href="/stats" id="stats-nav">Mining Monitor</a></li>
       <li><a href="/account" id="account-nav">My Account</a></li>{{end}}
