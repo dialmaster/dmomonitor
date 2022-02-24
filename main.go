@@ -177,20 +177,20 @@ func updateMinerStatus() {
 		for cloudKey, myMinerList := range minerList {
 
 			totalHash := 0
-			for name, stats := range myMinerList {
+			for minerID, stats := range myMinerList {
 				howLong := time.Since(stats.LastReport).Round(time.Second)
 				stats.HowLate = howLong.String()
-				myMinerList[name] = stats
+				myMinerList[minerID] = stats
 				if howLong.Seconds() > myConfig.MinerLateTime && !stats.Late {
 					stats.Late = true
-					myMinerList[name] = stats
+					myMinerList[minerID] = stats
 
 					if len(cloudKeyList[cloudKey].TelegramUserId) > 0 {
-						sendOfflineNotificationToTelegram(name, cloudKeyList[cloudKey].TelegramUserId)
+						sendOfflineNotificationToTelegram(stats.Name, cloudKeyList[cloudKey].TelegramUserId)
 					}
 				} else if howLong.Seconds() <= myConfig.MinerLateTime {
 					stats.Late = false
-					myMinerList[name] = stats
+					myMinerList[minerID] = stats
 					totalHash += stats.Hashrate
 				}
 			}

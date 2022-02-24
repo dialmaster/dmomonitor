@@ -16,6 +16,7 @@ type mineRpc struct {
 	Submit      int
 	LastReport  time.Time
 	Late        bool
+	MinerID     string
 	HowLate     string
 }
 
@@ -36,6 +37,9 @@ func getMinerStatsRPC(c *gin.Context) {
 	} else {
 		return
 	}
+	if thisStat.MinerID == "" {
+		thisStat.MinerID = thisStat.Name
+	}
 
 	mutex.Lock()
 
@@ -43,7 +47,7 @@ func getMinerStatsRPC(c *gin.Context) {
 	if !ok {
 		minerList[cloudKey] = make(map[string]mineRpc)
 	}
-	minerList[cloudKey][thisStat.Name] = thisStat
+	minerList[cloudKey][thisStat.MinerID] = thisStat
 
 	mutex.Unlock()
 }
