@@ -232,11 +232,16 @@ func updateMinerStatus() {
 
 		nHours := len(stats.HourlyStats)
 
+		thisMinute := float64(time.Now().Minute() + 1)
 		for j := 0; j < nHours; j++ {
 			var thisHour HourStatTX
 			thisHour.Hour = stats.HourlyStats[j].Hour
 			thisHour.CoinCount = float64(stats.HourlyStats[j].Coins)
-			thisHour.CoinsPerMinute = float64(stats.HourlyStats[j].Coins) * (1.0 / 60.0)
+			if j < (nHours - 1) {
+				thisHour.CoinsPerMinute = float64(stats.HourlyStats[j].Coins) * (1.0 / 60.0)
+			} else {
+				thisHour.CoinsPerMinute = float64(stats.HourlyStats[j].Coins) * (1.0 / thisMinute)
+			}
 			thisInfo.HourStats = append(thisInfo.HourStats, thisHour)
 		}
 
