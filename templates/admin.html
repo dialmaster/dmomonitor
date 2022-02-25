@@ -19,19 +19,21 @@
 
         <div class="page-container">
 
-            <table class="styled-table">
+            <table class="styled-table" style="margin-left:auto; margin-right:auto;">
                 <thead>
                   <tr>
+                    <th>ID</th>
                     <th>Username</th>
                     <th>Last Active</th>
                     <th>Active Miners</th>
                     <th>Total Hashrate</th>
-                    <th>Coins Per Day</th>
+                    <th>Coins Yesterday</th>
                   </tr>
                 </thead>
                 <tbody>
                   {{range $idx, $user := .UserList}}
                   <tr>
+                    <td>{{$user.ID}}</td>
                     <td>{{$user.UserName}}</td>
                     <td>{{$user.LastActive}}</td>
                     <td>{{$user.TotalActiveMiners}}</td>
@@ -40,7 +42,7 @@
                   </tr>
                   {{end}}
                   <tr>
-                    <td colspan="5"></td>
+                    <td colspan="6"></td>
                   </tr>
                 </tbody>
                 </table>

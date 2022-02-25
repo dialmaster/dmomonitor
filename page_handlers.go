@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -105,6 +106,7 @@ func adminPage(c *gin.Context) {
 		Admin             int
 		Paid              int
 		TotalActiveMiners int
+		ID                int
 	}
 
 	type adminPVars struct {
@@ -125,15 +127,26 @@ func adminPage(c *gin.Context) {
 	mutex.Lock()
 	for id, user := range userIDList {
 		var thisAVUser adminViewUser
+		thisAVUser.ID = user.ID
 		thisAVUser.UserName = user.UserName
 		thisAVUser.LastActive = lastActive[id]
 		thisAVUser.Admin = user.Admin
 		thisAVUser.Paid = user.Paid
 		thisAVUser.TotalActiveMiners = overallInfoTX[id].TotalActiveMiners
-		thisAVUser.CoinsPerDay = int(overallInfoTX[id].CurrentCoinsPerDay)
+		if len(overallInfoTX[id].DayStats) > 1 {
+			thisAVUser.CoinsPerDay = int(overallInfoTX[id].DayStats[len(overallInfoTX[id].DayStats)-2].CoinCount)
+		} else {
+			thisAVUser.CoinsPerDay = 0
+		}
+
 		thisAVUser.CurrentHash = totalHashG[user.CloudKey]
 		myPVars.UserList = append(myPVars.UserList, thisAVUser)
 	}
+
+	sort.Slice(myPVars.UserList, func(i, j int) bool {
+		return myPVars.UserList[i].ID < myPVars.UserList[j].ID
+	})
+
 	mutex.Unlock()
 
 	c.HTML(http.StatusOK, "admin.html", myPVars)

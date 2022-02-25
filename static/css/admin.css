@@ -1,7 +1,6 @@
 a#admin-nav {
-    color: #FFF !important;
+  color: #FFF !important;
 }
-
 
 @media screen and (max-device-width: 600px) {
 }
