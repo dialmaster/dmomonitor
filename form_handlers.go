@@ -51,6 +51,7 @@ func doUpdateTelegramID(c *gin.Context) {
 	if len(formErrors) > 0 {
 		c.Set("errors", formErrors)
 		accountPage(c)
+		return
 	}
 
 	_, err = db.Exec("UPDATE users SET telegram_user_id = ? WHERE ID = ?", telegramID, userID)
@@ -84,6 +85,7 @@ func doUpdateAddrs(c *gin.Context) {
 		log.Printf("Failed to get count of receiving addresses in DB for user id %d: %s\n", userID, err.Error())
 		c.Set("errors", formErrors)
 		accountPage(c)
+		return
 	}
 
 	if count > 0 {
@@ -131,6 +133,7 @@ func doChangePass(c *gin.Context) {
 	if len(formErrors) > 0 {
 		c.Set("errors", formErrors)
 		accountPage(c)
+		return
 	}
 
 	passHash, _ := HashPassword(newpass)
@@ -170,6 +173,7 @@ func doRegister(c *gin.Context) {
 	if len(formErrors) > 0 {
 		c.Set("errors", formErrors)
 		loginPage(c)
+		return
 	}
 
 	cloudkey := createCloudKey()
@@ -182,6 +186,7 @@ func doRegister(c *gin.Context) {
 		log.Printf("Registration insert failed for username %s: %s\n", username, err.Error())
 		c.Set("errors", formErrors)
 		loginPage(c)
+		return
 	}
 
 	id, err := res.LastInsertId()
@@ -214,6 +219,7 @@ func doLogin(c *gin.Context) {
 		log.Printf("Login failed for user %s. Password hash did not match entered password\n", username)
 		c.Set("errors", formErrors)
 		loginPage(c)
+		return
 	}
 
 	// Get a new cookie or set one if it does not exist:

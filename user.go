@@ -11,12 +11,15 @@ type UserData struct {
 	TelegramUserId     string
 	Paid               int
 	Admin              int
+	LastActive         string
 }
 
 type ReceivingAddress struct {
 	DisplayName      string
 	ReceivingAddress string
 }
+
+var lastActive = make(map[int]string)
 
 var userList = make(map[string]UserData)
 
@@ -61,6 +64,7 @@ func getAllUserInfo() {
 		userList[thisUser.UserName] = thisUser
 		cloudKeyList[thisUser.CloudKey] = thisUser
 		userIDList[thisUser.ID] = thisUser
+		lastActive[thisUser.ID] = "Unknown"
 		mutex.Unlock()
 	}
 

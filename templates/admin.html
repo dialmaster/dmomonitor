@@ -12,13 +12,41 @@
             });
          </script>
     </head>
-    <body data-Timer="{{.AutoRefresh}}">
+    <body>
         {{template "header" .}}
 
         {{template "sidenav" .}}
 
         <div class="page-container">
             <h3>Admin Page</h3>
+
+            <table class="styled-table">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Last Active</th>
+                    <th>Active Miners</th>
+                    <th>Total Hashrate</th>
+                    <th>Coins Per Day</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{range $idx, $user := .UserList}}
+                  <tr>
+                    <td>{{$user.UserName}}</td>
+                    <td>{{$user.LastActive}}</td>
+                    <td>{{$user.TotalActiveMiners}}</td>
+                    <td>{{$user.CurrentHash}}</td>
+                    <td>{{$user.CoinsPerDay}}</td>
+                  </tr>
+                  {{end}}
+                  <tr>
+                    <td colspan="5"></td>
+                  </tr>
+                </tbody>
+                </table>
+
+
         </div>
 
         {{template "footer" .}}

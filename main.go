@@ -104,11 +104,11 @@ func main() {
 	router.POST("/minerstats", checkBearer(), getMinerStatsRPC)
 	router.POST("/removeminer", checkLoggedIn(), addPageVars(), removeLateMiner)
 	router.GET("/login", addPageVars(), loginPage)
-	router.POST("/login", doLogin)
-	router.POST("/register", doRegister)
-	router.POST("/doupdatetelegramid", doUpdateTelegramID)
-	router.POST("/doupdateaddrs", doUpdateAddrs)
-	router.GET("/logout", doLogout)
+	router.POST("/login", addPageVars(), doLogin)
+	router.POST("/register", addPageVars(), doRegister)
+	router.POST("/doupdatetelegramid", checkLoggedIn(), addPageVars(), doUpdateTelegramID)
+	router.POST("/doupdateaddrs", checkLoggedIn(), addPageVars(), doUpdateAddrs)
+	router.GET("/logout", checkLoggedIn(), addPageVars(), doLogout)
 
 	log.Printf("Starting server!\n")
 	router.Run(":" + myConfig.ServerPort)
@@ -131,6 +131,10 @@ func checkBearer() gin.HandlerFunc {
 				c.Abort()
 				return
 			}
+
+			mutex.Lock()
+			lastActive[cloudKeyList[token].ID] = time.Now().Format(time.UnixDate)
+			mutex.Unlock()
 			c.Set("cloudKey", token)
 		}
 		c.Next()
@@ -186,40 +190,16 @@ func checkLoggedIn() gin.HandlerFunc {
 				c.Next()
 			}
 		}
+		mutex.Lock()
+		lastActive[id.(int)] = time.Now().Format(time.UnixDate)
+		mutex.Unlock()
+
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 
 	}
 }
 
 func updateMinerStatus() {
-
-	mutex.Lock() // For now... lock for the whole time we are reading and writing back to minerList...
-	if len(minerList) > 0 {
-		for cloudKey, myMinerList := range minerList {
-
-			totalHash := 0
-			for minerID, stats := range myMinerList {
-				howLong := time.Since(stats.LastReport).Round(time.Second)
-				stats.HowLate = howLong.String()
-				myMinerList[minerID] = stats
-				if howLong.Seconds() > myConfig.MinerLateTime && !stats.Late {
-					stats.Late = true
-					myMinerList[minerID] = stats
-
-					if len(cloudKeyList[cloudKey].TelegramUserId) > 0 {
-						sendOfflineNotificationToTelegram(stats.Name, cloudKeyList[cloudKey].TelegramUserId)
-					}
-				} else if howLong.Seconds() <= myConfig.MinerLateTime {
-					stats.Late = false
-					myMinerList[minerID] = stats
-					totalHash += stats.Hashrate
-				}
-			}
-			totalHashG[cloudKey] = formatHashNum(totalHash) // TODO: should be by cloudkey...
-		}
-	}
-	mutex.Unlock()
-
 	for userID, stats := range addrStats {
 		var thisInfo OverallInfoTX
 
@@ -267,5 +247,40 @@ func updateMinerStatus() {
 		overallInfoTX[userID] = thisInfo
 		mutex.Unlock()
 	}
+
+	mutex.Lock() // For now... lock for the whole time we are reading and writing back to minerList...
+	if len(minerList) > 0 {
+		for cloudKey, myMinerList := range minerList {
+
+			totalHash := 0
+			totalActiveMiners := 0
+			for minerID, stats := range myMinerList {
+				howLong := time.Since(stats.LastReport).Round(time.Second)
+				stats.HowLate = howLong.String()
+				myMinerList[minerID] = stats
+				if howLong.Seconds() > myConfig.MinerLateTime && !stats.Late {
+					stats.Late = true
+					myMinerList[minerID] = stats
+					if len(cloudKeyList[cloudKey].TelegramUserId) > 0 {
+						sendOfflineNotificationToTelegram(stats.Name, cloudKeyList[cloudKey].TelegramUserId)
+					}
+				} else if howLong.Seconds() <= myConfig.MinerLateTime {
+					stats.Late = false
+					totalActiveMiners += 1
+					myMinerList[minerID] = stats
+					totalHash += stats.Hashrate
+				}
+			}
+
+			userID := cloudKeyList[cloudKey].ID
+			var myOverallInfoTX OverallInfoTX = overallInfoTX[userID]
+
+			myOverallInfoTX.TotalActiveMiners = totalActiveMiners
+			overallInfoTX[userID] = myOverallInfoTX
+
+			totalHashG[cloudKey] = formatHashNum(totalHash) // TODO: should be by cloudkey...
+		}
+	}
+	mutex.Unlock()
 
 }

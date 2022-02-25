@@ -97,7 +97,46 @@ func adminPage(c *gin.Context) {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 
-	c.HTML(http.StatusOK, "admin.html", pVars)
+	type adminViewUser struct {
+		UserName          string
+		LastActive        string
+		CoinsPerDay       int
+		CurrentHash       string
+		Admin             int
+		Paid              int
+		TotalActiveMiners int
+	}
+
+	type adminPVars struct {
+		AutoRefresh int
+		Uptime      int
+		UserList    []adminViewUser
+		PageTitle   string
+		Guest       bool
+		Admin       int
+	}
+
+	var myPVars adminPVars
+
+	myPVars.PageTitle = "DMO Monitor - Admin"
+	myPVars.Guest = pVars.Guest
+	myPVars.Admin = pVars.Admin
+
+	mutex.Lock()
+	for id, user := range userIDList {
+		var thisAVUser adminViewUser
+		thisAVUser.UserName = user.UserName
+		thisAVUser.LastActive = lastActive[id]
+		thisAVUser.Admin = user.Admin
+		thisAVUser.Paid = user.Paid
+		thisAVUser.TotalActiveMiners = overallInfoTX[id].TotalActiveMiners
+		thisAVUser.CoinsPerDay = int(overallInfoTX[id].CurrentCoinsPerDay)
+		thisAVUser.CurrentHash = totalHashG[user.CloudKey]
+		myPVars.UserList = append(myPVars.UserList, thisAVUser)
+	}
+	mutex.Unlock()
+
+	c.HTML(http.StatusOK, "admin.html", myPVars)
 }
 
 func statsPage(c *gin.Context) {
@@ -108,12 +147,7 @@ func statsPage(c *gin.Context) {
 	cloudKey := userIDList[userID].CloudKey
 
 	mutex.Lock()
-	for _, stats := range minerList[cloudKey] {
-		if !stats.Late {
-			pVars.Totalminers += 1
-		}
-	}
-
+	pVars.Totalminers = overallInfoTX[userID].TotalActiveMiners
 	pVars.NetHash = overallInfoTX[userID].NetHash
 
 	pVars.CurrentPrice = currentPricePerDMO

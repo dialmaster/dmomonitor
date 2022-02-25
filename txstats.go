@@ -20,6 +20,7 @@ type OverallInfoTX struct {
 	NetHash            string
 	DayStats           []DayStatTX
 	HourStats          []HourStatTX
+	TotalActiveMiners  int
 }
 
 var overallInfoTX = make(map[int]OverallInfoTX)

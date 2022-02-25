@@ -2,7 +2,7 @@
   <div class="page-header">
     <img id="hamburger" class="sidenav-hidden" src="/static/img/hamburger.png" onclick="hamburgerClick()"></img>
     {{if .Uptime }}<!--<div class="uptime">Uptime: {{.Uptime}}</div>-->{{ end }}
-    <h2 class="page-title">{{.PageTitle}} {{if .VersionString}}<span class="version-string">{{.VersionString}}</span>{{end}}</h2>
+    <h2 class="page-title">{{.PageTitle}}</h2>
     {{if .AutoRefresh}}<div class="refresh-countdown"><span>Last Refresh: </span><span id="my-timer"></span></div>{{end}}
   </div>
 {{end}}
