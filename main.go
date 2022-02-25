@@ -132,9 +132,6 @@ func checkBearer() gin.HandlerFunc {
 				return
 			}
 
-			mutex.Lock()
-			lastActive[cloudKeyList[token].ID] = time.Now().Format(time.UnixDate)
-			mutex.Unlock()
 			c.Set("cloudKey", token)
 		}
 		c.Next()
