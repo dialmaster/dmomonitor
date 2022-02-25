@@ -99,14 +99,14 @@ func adminPage(c *gin.Context) {
 	}
 
 	type adminViewUser struct {
-		UserName          string
-		LastActive        string
-		CoinsPerDay       int
-		CurrentHash       string
-		Admin             int
-		Paid              int
-		TotalActiveMiners int
-		ID                int
+		UserName            string
+		LastActive          string
+		ProjectedCoinsToday string
+		CurrentHash         string
+		Admin               int
+		Paid                int
+		TotalActiveMiners   int
+		ID                  int
 	}
 
 	type adminPVars struct {
@@ -133,11 +133,7 @@ func adminPage(c *gin.Context) {
 		thisAVUser.Admin = user.Admin
 		thisAVUser.Paid = user.Paid
 		thisAVUser.TotalActiveMiners = overallInfoTX[id].TotalActiveMiners
-		if len(overallInfoTX[id].DayStats) > 1 {
-			thisAVUser.CoinsPerDay = int(overallInfoTX[id].DayStats[len(overallInfoTX[id].DayStats)-2].CoinCount)
-		} else {
-			thisAVUser.CoinsPerDay = 0
-		}
+		thisAVUser.ProjectedCoinsToday = overallInfoTX[id].Projection
 
 		thisAVUser.CurrentHash = totalHashG[user.CloudKey]
 		myPVars.UserList = append(myPVars.UserList, thisAVUser)

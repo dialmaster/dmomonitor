@@ -27,7 +27,7 @@
                     <th>Last Active</th>
                     <th>Active Miners</th>
                     <th>Total Hashrate</th>
-                    <th>Coins Yesterday</th>
+                    <th>Est Coins Today</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -38,7 +38,7 @@
                     <td>{{$user.LastActive}}</td>
                     <td>{{$user.TotalActiveMiners}}</td>
                     <td>{{$user.CurrentHash}}</td>
-                    <td>{{$user.CoinsPerDay}}</td>
+                    <td>{{$user.ProjectedCoinsToday}}</td>
                   </tr>
                   {{end}}
                   <tr>
