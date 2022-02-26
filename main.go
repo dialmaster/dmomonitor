@@ -97,6 +97,7 @@ func main() {
 
 	router.GET("/", addPageVars(), landingPage)
 	router.GET("/wrapminer", addPageVars(), wrapMiner)
+	router.GET("/faq", addPageVars(), faqPage)
 	router.GET("/stats", checkLoggedIn(), addPageVars(), statsPage)
 	router.GET("/account", checkLoggedIn(), addPageVars(), accountPage)
 	router.GET("/admin", checkLoggedIn(), addPageVars(), adminPage)

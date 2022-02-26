@@ -1,0 +1,19 @@
+a#faq-nav {
+    color: #FFF !important;
+}
+
+  .faq-info {
+    font-size: 22px;
+    margin-left: 15px;
+    margin-right: 15px;
+    line-height: 36px;
+  }
+
+
+@media screen and (max-device-width: 600px) {
+  .faq-info {
+    padding-top: 20px;
+    font-size: 18px;
+    line-height: 36px;
+  }
+}

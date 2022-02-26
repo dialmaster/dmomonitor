@@ -1,0 +1,88 @@
+<html>
+    <head>
+        {{template "sitehead" .}}
+        <link href="/static/css/jquery-ui.css" rel="stylesheet" />
+        <link href="/static/css/faq.css" rel="stylesheet" />
+        <script>
+            $(function() {
+               $( "#accordion-1" ).accordion({
+               collapsible: true,
+               heightStyle: 'content'
+            });
+            });
+         </script>
+    </head>
+    <body data-Timer="{{.AutoRefresh}}">
+        {{template "header" .}}
+
+        {{template "sidenav" .}}
+
+        <div class="page-container">
+            
+            <div class="faq-info">
+                <h3>Initial Setup:</h3>
+                    <p>
+                        <ol>
+                        <li>
+                            Create an account on this site. Once you do you will get a unique Cloud Key,
+                            which you can find in <a href="/account">My Account</a>
+                        </li>
+                        <li>
+                            Download <a href="/wrapminer">DMO-Wrapminer</a>. You will use this to run your miners locally, allowing them to connect to DMO-Monitor
+                        </li>
+                        <li>
+                            Extract the contents of the DMO-Wrapminer archive into the same directory where your DynMiner executable is.
+                        </li>
+                        <li>
+                            Edit the provided dmowrapconfig.yaml file, putting your information and desired configuration in.
+                        </li>
+                        <li>
+                            Make sure you put the Cloud Key you got from My Account into dmowrapconfig.yaml
+                        </li>
+                        <li>
+                            Run dmo-wrapminer, passing the yaml config as a command line option like: <b>dmo-wrapminer.exe dmowrapconfig.yaml</b>
+                        </li>
+                        </ol>
+                    </p>
+                    <p>You should now be able to visit <a href="/stats">Mining Monitor</a> and see your runnning miner statistics!</p>
+                
+                <hr>
+
+                <h3>Telegram Notifications:</h3>
+                <p>
+                    In order to receive realtime notifications from Telegram if your miners go down/offline do the following:
+                    <ol>
+                        <li>
+                            Create a <a href="https://telegram.org/">Telegram</a> Account and download the app on your device.
+                        </li>
+                        <li>
+                            Send a message to userinfobot on Telegram to get your Telegram User ID. See instructions <a href="https://www.alphr.com/telegram-find-user-id/">HERE</a>
+                        </li>
+                        <li>
+                            Go to <a href="/account">My Account</a> and add your telegram user id from the previous step
+                        </li>
+                        <li>
+                            Now find dmo_monitor_bot on telegram and send the message <b>/start</b> to it.
+                        </li>
+                    </ol>
+                </p>
+                <p>Now test it out. Take a miner offline, wait about 1 minute, and see if you get a notification that your miner is offline.</p>
+
+                <hr>
+                <h3>Mining Statistics:</h3>
+                <p>
+                    This step is simple. If you are solo mining, you can put your receiving address into <a href="/account">My Account</a> and you will see the statistics for coins mined to that address.
+                </p>
+                <p>
+                    Note that you can put in any receiving address here and you will be able to see mined coin statistics for that address since it is public information on the blockchain.
+                </p>
+
+
+            </div>
+        </div>
+
+        {{template "footer" .}}
+      
+    </body>
+  </html>
+

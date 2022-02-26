@@ -92,6 +92,13 @@ func wrapMiner(c *gin.Context) {
 	c.HTML(http.StatusOK, "wrapminer.html", pVars)
 }
 
+func faqPage(c *gin.Context) {
+	pVars := getContextpVars(c)
+	pVars.PageTitle = "DMO Monitor FAQ"
+
+	c.HTML(http.StatusOK, "faq.html", pVars)
+}
+
 func adminPage(c *gin.Context) {
 	pVars := getContextpVars(c)
 	if pVars.Admin != 1 {
