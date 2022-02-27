@@ -87,7 +87,7 @@ func landingPage(c *gin.Context) {
 
 func wrapMiner(c *gin.Context) {
 	pVars := getContextpVars(c)
-	pVars.PageTitle = "DMO-Wrapminer"
+	pVars.PageTitle = "DMO-Wrapminer v" + myConfig.DmoWrapVersionString
 
 	c.HTML(http.StatusOK, "wrapminer.html", pVars)
 }
