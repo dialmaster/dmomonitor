@@ -9,6 +9,8 @@ DBIP: 127.0.0.1
 
   #### END REQUIRED PARAMS
 
+DmoWrapVersionString: "1.1.0"
+
   # The number of seconds for the webui to wait before it auto-refreshes itself
   # Default is 0 and means autorefresh is disabled. Min is 10 seconds.
 AutoRefreshSeconds: 10

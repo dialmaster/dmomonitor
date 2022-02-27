@@ -9,15 +9,16 @@ import (
 )
 
 type conf struct {
-	ServerPort         string  `yaml:"ServerPort"`
-	MinerLateTime      float64 `yaml:"MinerLateTime"`
-	AutoRefreshSeconds int     `yaml:"AutoRefreshSeconds"`
-	DailyStatDays      int     `yaml:"DailyStatDays"`
-	DBUser             string  `yaml:"DBUser"`
-	DBPass             string  `yaml:"DBPass"`
-	DBIP               string  `yaml:"DBIP"`
-	DBPort             string  `yaml:"DBPort"`
-	DBName             string  `yaml:"DBName"`
+	ServerPort           string  `yaml:"ServerPort"`
+	MinerLateTime        float64 `yaml:"MinerLateTime"`
+	AutoRefreshSeconds   int     `yaml:"AutoRefreshSeconds"`
+	DailyStatDays        int     `yaml:"DailyStatDays"`
+	DBUser               string  `yaml:"DBUser"`
+	DBPass               string  `yaml:"DBPass"`
+	DBIP                 string  `yaml:"DBIP"`
+	DBPort               string  `yaml:"DBPort"`
+	DBName               string  `yaml:"DBName"`
+	DmoWrapVersionString string  `yaml:"DmoWrapVersionString"`
 }
 
 func (myConfig *conf) getConf() *conf {

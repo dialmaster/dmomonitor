@@ -19,6 +19,7 @@ import (
 )
 
 var versionString = "v1.2.0"
+var dmoWrapVersionString = "1.1.0"
 
 var db *sql.DB
 var dbErr error
@@ -96,6 +97,7 @@ func main() {
 	router.LoadHTMLGlob("templates/*.html")
 
 	router.GET("/", addPageVars(), landingPage)
+	router.GET("/dmowrapversioncheck", getDMOWrapVersion)
 	router.GET("/wrapminer", addPageVars(), wrapMiner)
 	router.GET("/faq", addPageVars(), faqPage)
 	router.GET("/stats", checkLoggedIn(), addPageVars(), statsPage)

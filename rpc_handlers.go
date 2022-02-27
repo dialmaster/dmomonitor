@@ -20,6 +20,17 @@ type mineRpc struct {
 	HowLate     string
 }
 
+func getDMOWrapVersion(c *gin.Context) {
+	type dmoWrapVersionInfo struct {
+		Version string
+	}
+	var thisVersionInfo dmoWrapVersionInfo
+
+	thisVersionInfo.Version = myConfig.DmoWrapVersionString
+
+	c.JSON(200, thisVersionInfo)
+}
+
 func getMinerStatsRPC(c *gin.Context) {
 	var thisStat mineRpc
 	if err := c.BindJSON(&thisStat); err != nil {
