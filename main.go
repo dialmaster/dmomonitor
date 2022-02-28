@@ -19,7 +19,7 @@ import (
 )
 
 var versionString = "v1.2.0"
-var dmoWrapVersionString = "1.1.0"
+var dmoWrapVersionString = "1.2.0"
 
 var db *sql.DB
 var dbErr error
