@@ -35,6 +35,7 @@ type pageVars struct {
 	UserID             int
 	Admin              int
 	Paid               int
+	MiningAddr         string
 }
 
 func getContextpVars(c *gin.Context) pageVars {
@@ -160,11 +161,19 @@ func statsPage(c *gin.Context) {
 	pVars.PageTitle = "DMO Monitor - Statistics"
 
 	userID := pVars.UserID
-	cloudKey := userIDList[userID].CloudKey
 
 	mutex.Lock()
+	cloudKey := userIDList[userID].CloudKey
 	pVars.Totalminers = overallInfoTX[userID].TotalActiveMiners
 	pVars.NetHash = overallInfoTX[userID].NetHash
+	pVars.MiningAddr = ""
+
+	for _, address := range userIDList[userID].ReceivingAddresses {
+		pVars.MiningAddr += address.ReceivingAddress + ","
+	}
+	if len(pVars.MiningAddr) > 2 {
+		pVars.MiningAddr = pVars.MiningAddr[:len(pVars.MiningAddr)-1]
+	}
 
 	pVars.CurrentPrice = currentPricePerDMO
 	pVars.DollarsPerDay = currentPricePerDMO * overallInfoTX[userID].CurrentCoinsPerDay
