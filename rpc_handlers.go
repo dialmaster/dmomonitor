@@ -14,6 +14,7 @@ type mineRpc struct {
 	Accept      int
 	Reject      int
 	Submit      int
+	Diff        float64
 	LastReport  time.Time
 	Late        bool
 	MinerID     string

@@ -20,6 +20,7 @@
                 <th><span class="hidden-mobile">Submitted</span><span class="hidden-pc">S</span></th>
                 <th><span class="hidden-mobile">Accepted</span><span class="hidden-pc">A</span></th>
                 <th><span class="hidden-mobile">Rejected</span><span class="hidden-pc">R</span></th>
+                <th><span class="hidden-mobile">Diff</span><span class="hidden-pc">D</span></th>
               </tr>
             </thead>
             <tbody>
@@ -34,6 +35,7 @@
                 <td>{{$stats.Submit}}</td>
                 <td>{{$stats.Accept}}</td>
                 <td>{{$stats.Reject}}</td>
+                <td>{{$stats.Diff}}</td>
                 {{end}}
               </tr>
               {{end}}
@@ -41,7 +43,7 @@
                 <td colspan="1">Total Hashrate:</td>
                 <td colspan="2">{{.Totalhash}}</td>
                 <td>Active Miners:</td>
-                <td>{{.Totalminers}}</td>
+                <td colspan="2">{{.Totalminers}}</td>
               </tr>
             </tbody>
             </table>
