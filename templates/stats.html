@@ -35,7 +35,7 @@
                 <td>{{$stats.Submit}}</td>
                 <td>{{$stats.Accept}}</td>
                 <td>{{$stats.Reject}}</td>
-                <td>{{$stats.Diff}}</td>
+                <td>{{if $stats.Diff }}{{$stats.Diff}}{{else}}NA{{end}}</td>
                 {{end}}
               </tr>
               {{end}}
