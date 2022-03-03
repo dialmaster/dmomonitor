@@ -24,9 +24,9 @@
 
             <i>Once you create an account, you will need to run your miners with dmo-wrapminer to take advantage of the miner monitoring.</i>
             <br /><br />
-            Linux binary available <a href="/static/dmo-wrapminer/linux/dmo-wrapminer.tar.gz">HERE</a>.
+            Linux binary package available <a href="/static/dmo-wrapminer/linux/dmo-wrapminer.tar.gz">HERE</a>.
             <br />
-            Windows binary available <a href="/static/dmo-wrapminer/windows/dmowrapminer.zip">HERE</a>.
+            Windows binary package available <a href="/static/dmo-wrapminer/windows/dmowrapminer.zip">HERE</a>.
             <br /><br />
             <u>What it does:</u>
             <ul>
@@ -42,10 +42,17 @@
             <li>Extract it into the same directory with your DynMiner OR SRBMiner executable</li>   
             <li>Update the .yaml configuration file that comes with it.</li>    
             <li>Run it, passing the name of the config you with to use: <b>dmo-wrapminer myconfig.yaml</b></li>
+            <li>If you do not pass a config file name, then it will look for mydmowrapconfig.yaml as a default</li>
+            <li><b>To run a dmo-wrapminer that AUTOMATICALLY checks for updates and updates itself, please run <i>dmo-launcher</i> instead!</b></i></li>
             </ul>
             <br />
 
-            After the beta, this wrapper will be what allows you to remotely update your miner configurations, restart your miner, 
+            If you choose to use <b>dmo-launcher</b> then your systems will automatically be kept up to date with any future updates required for 
+            remote management (or any other new features that get added).
+            <br />
+            <br />
+
+            After the beta, this wrapper will be what allows you to remotely update your miner configurations, restart your miner,
             and deploy new versions of DynMiner directly from this site.
             <br />
             <br />
