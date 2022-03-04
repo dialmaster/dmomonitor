@@ -6,8 +6,9 @@ div#changelog {
   border: 1px solid black;
   font-size: 14px;
   padding: 16px;
-  margin: 14px;
-  background-color: #DDD
+  margin: 14px auto;
+  background-color: #DDD;
+  max-width: 1000px;
 }
 
   .wrapminer-info {
