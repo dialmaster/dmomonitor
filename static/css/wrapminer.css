@@ -2,6 +2,14 @@ a#wrapminer-nav {
     color: #FFF !important;
 }
 
+div#changelog {
+  border: 1px solid black;
+  font-size: 14px;
+  padding: 16px;
+  margin: 14px;
+  background-color: #DDD
+}
+
   .wrapminer-info {
     font-size: 24px;
     margin-left: 15px;

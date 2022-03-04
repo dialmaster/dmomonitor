@@ -1,12 +1,16 @@
 package main
 
 import (
+	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/parser"
 )
 
 type pageVars struct {
@@ -36,6 +40,7 @@ type pageVars struct {
 	Admin              int
 	Paid               int
 	MiningAddr         string
+	OtherData          template.HTML
 }
 
 func getContextpVars(c *gin.Context) pageVars {
@@ -89,6 +94,13 @@ func landingPage(c *gin.Context) {
 func wrapMiner(c *gin.Context) {
 	pVars := getContextpVars(c)
 	pVars.PageTitle = "DMO-Wrapminer v" + myConfig.DmoWrapVersionString
+
+	content, _ := ioutil.ReadFile("templates/changelog.md")
+
+	md := []byte(content)
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs
+	parser := parser.NewWithExtensions(extensions)
+	pVars.OtherData = template.HTML(string(markdown.ToHTML(md, parser, nil)))
 
 	c.HTML(http.StatusOK, "wrapminer.html", pVars)
 }
