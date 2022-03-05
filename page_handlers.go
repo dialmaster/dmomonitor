@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -127,6 +129,8 @@ func adminPage(c *gin.Context) {
 		Paid                int
 		TotalActiveMiners   int
 		ID                  int
+		WinPercent          string
+		EstHash             string
 	}
 
 	type adminPVars struct {
@@ -154,6 +158,15 @@ func adminPage(c *gin.Context) {
 		thisAVUser.Paid = user.Paid
 		thisAVUser.TotalActiveMiners = overallInfoTX[id].TotalActiveMiners
 		thisAVUser.ProjectedCoinsToday = overallInfoTX[id].Projection
+		var numDays = len(overallInfoTX[id].DayStats)
+		if numDays > 0 {
+			var winPercent = overallInfoTX[id].DayStats[numDays-1].WinPercent
+			var netHashStr = overallInfoTX[id].NetHash
+			netHash, _ := strconv.ParseFloat(netHashStr[:len(netHashStr)-2], 64)
+			// Not sure why the multiplier needs to be 0.018, but that seems to align with KNOWN hashrates/coins
+			thisAVUser.EstHash = fmt.Sprintf("%0.2f", (netHash * winPercent * .018))
+			thisAVUser.WinPercent = fmt.Sprintf("%0.2f", winPercent)
+		}
 
 		thisAVUser.CurrentHash = totalHashG[user.CloudKey]
 		myPVars.UserList = append(myPVars.UserList, thisAVUser)

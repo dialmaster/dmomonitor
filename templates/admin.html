@@ -28,6 +28,8 @@
                     <th>Active Miners</th>
                     <th>Total Hashrate</th>
                     <th>Est Coins Today</th>
+                    <th>Win Percent</th>
+                    <th>Est Hash</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -39,10 +41,13 @@
                     <td>{{$user.TotalActiveMiners}}</td>
                     <td>{{$user.CurrentHash}}</td>
                     <td>{{$user.ProjectedCoinsToday}}</td>
+                    <td>{{$user.WinPercent}}</td>
+                    <td>{{$user.EstHash}}</td>
+
                   </tr>
                   {{end}}
                   <tr>
-                    <td colspan="6"></td>
+                    <td colspan="8"></td>
                   </tr>
                 </tbody>
                 </table>
