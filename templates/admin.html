@@ -29,7 +29,6 @@
                     <th>Total Hashrate</th>
                     <th>Est Coins Today</th>
                     <th>Win Percent</th>
-                    <th>Est Hash</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -39,15 +38,13 @@
                     <td>{{$user.UserName}}</td>
                     <td>{{$user.LastActive}}</td>
                     <td>{{$user.TotalActiveMiners}}</td>
-                    <td>{{$user.CurrentHash}}</td>
-                    <td>{{$user.ProjectedCoinsToday}}</td>
-                    <td>{{$user.WinPercent}}</td>
-                    <td>{{$user.EstHash}}</td>
-
+                    <td>{{if $user.CurrentHash}}{{$user.CurrentHash}}{{else}}0{{end}}</td>
+                    <td>{{if $user.ProjectedCoinsToday}}{{$user.ProjectedCoinsToday}}{{else}}NA{{end}}</td>
+                    <td>{{if $user.WinPercent}}{{$user.WinPercent}}{{else}}NA{{end}}</td>
                   </tr>
                   {{end}}
                   <tr>
-                    <td colspan="8"></td>
+                    <td colspan="7"></td>
                   </tr>
                 </tbody>
                 </table>

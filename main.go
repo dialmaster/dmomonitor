@@ -189,9 +189,12 @@ func checkLoggedIn() gin.HandlerFunc {
 				c.Next()
 			}
 		}
+		var userID = id.(int)
 		mutex.Lock()
-		lastActive[id.(int)] = time.Now().Format(time.UnixDate)
+		lastActive[userID] = time.Now().Unix()
 		mutex.Unlock()
+
+		updateUserLastActive(userID)
 
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 

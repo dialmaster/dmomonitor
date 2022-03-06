@@ -1,6 +1,9 @@
 package main
 
-import "log"
+import (
+	"log"
+	"time"
+)
 
 type UserData struct {
 	PasswordHash       string
@@ -11,7 +14,7 @@ type UserData struct {
 	TelegramUserId     string
 	Paid               int
 	Admin              int
-	LastActive         string
+	LastActive         int64 // unix_epoch
 }
 
 type ReceivingAddress struct {
@@ -19,7 +22,7 @@ type ReceivingAddress struct {
 	ReceivingAddress string
 }
 
-var lastActive = make(map[int]string)
+var lastActive = make(map[int]int64)
 
 var userList = make(map[string]UserData)
 
@@ -27,9 +30,18 @@ var cloudKeyList = make(map[string]UserData)
 
 var userIDList = make(map[int]UserData)
 
+func updateUserLastActive(userID int) {
+	_, err := db.Exec("UPDATE users SET last_active = ? WHERE ID = ?", time.Now().Unix(), userID)
+
+	if err != nil {
+		log.Printf("Failed to update last active time for user id %d: %s\n", userID, err.Error())
+	}
+
+}
+
 // Get all users in the DB:
 func getAllUserInfo() {
-	results, err := db.Query("select password_hash, username, cloud_key, id, telegram_user_id, paid, admin from users")
+	results, err := db.Query("select password_hash, username, cloud_key, id, telegram_user_id, paid, admin, last_active from users")
 
 	if err != nil {
 		log.Printf("Unable to get user data from DB\n")
@@ -38,7 +50,7 @@ func getAllUserInfo() {
 
 	for results.Next() {
 		var thisUser UserData
-		err = results.Scan(&thisUser.PasswordHash, &thisUser.UserName, &thisUser.CloudKey, &thisUser.ID, &thisUser.TelegramUserId, &thisUser.Paid, &thisUser.Admin)
+		err = results.Scan(&thisUser.PasswordHash, &thisUser.UserName, &thisUser.CloudKey, &thisUser.ID, &thisUser.TelegramUserId, &thisUser.Paid, &thisUser.Admin, &thisUser.LastActive)
 		if err != nil {
 			log.Printf("Unable to read user from DB\n")
 			continue
@@ -64,7 +76,7 @@ func getAllUserInfo() {
 		userList[thisUser.UserName] = thisUser
 		cloudKeyList[thisUser.CloudKey] = thisUser
 		userIDList[thisUser.ID] = thisUser
-		lastActive[thisUser.ID] = "Unknown"
+		lastActive[thisUser.ID] = thisUser.LastActive
 		mutex.Unlock()
 	}
 

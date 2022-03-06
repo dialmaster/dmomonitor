@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -179,7 +180,7 @@ func doRegister(c *gin.Context) {
 	cloudkey := createCloudKey()
 	passHash, _ := HashPassword(password)
 
-	res, err := db.Exec("INSERT INTO users (password_hash, username, created_at, cloud_key) values (?, ?, NOW(), ?)", passHash, username, cloudkey)
+	res, err := db.Exec("INSERT INTO users (password_hash, username, created_at, cloud_key, last_active) values (?, ?, NOW(), ?, ?)", passHash, username, cloudkey, time.Now().Unix())
 
 	if err != nil {
 		formErrors = append(formErrors, "Registration failed")
@@ -228,6 +229,8 @@ func doLogin(c *gin.Context) {
 	session.Set("ID", id)
 	session.Set("guest", false)
 	session.Save()
+
+	updateUserLastActive(id)
 
 	// Success! Set userid in session unset guest and redirect
 	c.Redirect(http.StatusFound, "/")
