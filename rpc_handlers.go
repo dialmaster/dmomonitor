@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -52,6 +53,8 @@ func getMinerStatsRPC(c *gin.Context) {
 	if thisStat.MinerID == "" {
 		thisStat.MinerID = thisStat.Name
 	}
+
+	log.Printf("Miner %s reported for user %s with hashrate %s\n", thisStat.Name, cloudKeyList[cloudKey].UserName, thisStat.HashrateStr)
 
 	mutex.Lock()
 
