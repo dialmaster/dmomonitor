@@ -9,17 +9,19 @@ import (
 )
 
 type mineRpc struct {
-	Name        string
-	Hashrate    int
-	HashrateStr string
-	Accept      int
-	Reject      int
-	Submit      int
-	Diff        float64
-	LastReport  time.Time
-	Late        bool
-	MinerID     string
-	HowLate     string
+	Name           string
+	Hashrate       int
+	HashrateStr    string
+	Accept         int
+	Reject         int
+	Submit         int
+	Diff           float64
+	LastReport     time.Time
+	Late           bool
+	MinerID        string
+	HowLate        string
+	Uptime         int
+	UptimeDuration string
 }
 
 func getDMOWrapVersion(c *gin.Context) {
@@ -42,6 +44,11 @@ func getMinerStatsRPC(c *gin.Context) {
 
 	thisStat.HashrateStr = formatHashNum(thisStat.Hashrate)
 	thisStat.LastReport = time.Now()
+	if thisStat.Uptime > 0 {
+		thisStat.UptimeDuration = fmt.Sprintf("%s", time.Duration(thisStat.Uptime*1000000000))
+	} else {
+		thisStat.UptimeDuration = "?"
+	}
 
 	cInterface, found := c.Get("cloudKey")
 	cloudKey := ""

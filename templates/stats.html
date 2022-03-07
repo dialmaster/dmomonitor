@@ -12,11 +12,12 @@
         <div class="page-container stats">
           <center>
           <div class="miners-container">
-            <table class="styled-table">
+            <table class="styled-table" style="margin-bottom: 0">
             <thead>
               <tr>
                 <th>Miner</th>
                 <th>Hash</th>
+                <th>Uptime</th>
                 <th><span class="hidden-mobile">Submitted</span><span class="hidden-pc">S</span></th>
                 <th><span class="hidden-mobile">Accepted</span><span class="hidden-pc">A</span></th>
                 <th><span class="hidden-mobile">Rejected</span><span class="hidden-pc">R</span></th>
@@ -28,9 +29,9 @@
               <tr {{if $stats.Late}}class="warn"{{end}}>
                 <td>{{$stats.Name}} {{if $stats.Late}} - OFFLINE {{$stats.HowLate}}{{end}}</td> 
                 <td>{{$stats.HashrateStr}}</td>
-                
+                <td>{{$stats.UptimeDuration}}</td>
                 {{if $stats.Late}}
-                <td colspan="3" class="table-button" onclick="minerOnClick('{{$name}}')">REMOVE MINER</td>
+                <td colspan="4" class="table-button" onclick="minerOnClick('{{$name}}')">REMOVE MINER</td>
                 {{else}}
                 <td>{{$stats.Submit}}</td>
                 <td>{{$stats.Accept}}</td>
@@ -39,15 +40,22 @@
                 {{end}}
               </tr>
               {{end}}
-              <tr>
-                <td colspan="1">Total Hashrate:</td>
-                <td colspan="2">{{.Totalhash}}</td>
-                <td>Active Miners:</td>
-                <td colspan="2">{{.Totalminers}}</td>
-              </tr>
+              <tr style="display:none"><td colspan="7"></td></tr>
             </tbody>
+            
             </table>
 
+            <table class="styled-table" style="margin-top: 0">
+            <tbody>
+              <tr>
+              <td colspan="2">Total Hashrate:</td>
+              <td colspan="1">{{.Totalhash}}</td>
+              <td></td>
+              <td>Active Miners:</td>
+              <td colspan="2">{{.Totalminers}}</td>
+            </tr>
+            </tbody>
+            </table>
           </div>
 
 
