@@ -45,7 +45,22 @@ func getMinerStatsRPC(c *gin.Context) {
 	thisStat.HashrateStr = formatHashNum(thisStat.Hashrate)
 	thisStat.LastReport = time.Now()
 	if thisStat.Uptime > 0 {
-		thisStat.UptimeDuration = fmt.Sprintf("%s", time.Duration(thisStat.Uptime*1000000000))
+		someTime := time.Duration(thisStat.Uptime * 1000000000)
+		secs := int(someTime.Seconds()) % 60
+		mins := int(someTime.Minutes()) % 60
+		hours := int(someTime.Hours()) % 24
+		days := int(float64(someTime.Hours()) * float64(0.041666666))
+
+		if mins == 0 && hours == 0 && days == 0 {
+			thisStat.UptimeDuration = fmt.Sprintf("%ds", secs)
+		} else if hours == 0 && days == 0 {
+			thisStat.UptimeDuration = fmt.Sprintf("%dm%ds", mins, secs)
+		} else if days == 0 {
+			thisStat.UptimeDuration = fmt.Sprintf("%dh%dm", hours, mins)
+		} else {
+			thisStat.UptimeDuration = fmt.Sprintf("%dd%dh%dm", days, hours, mins)
+		}
+
 	} else {
 		thisStat.UptimeDuration = "?"
 	}

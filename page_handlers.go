@@ -154,7 +154,7 @@ func adminPage(c *gin.Context) {
 		if lastActive[id] == 0 {
 			thisAVUser.LastActive = "Unknown"
 		} else {
-			thisAVUser.LastActive = time.Unix(lastActive[id], 0).Format("Jan _2 2006 3:04PM")
+			thisAVUser.LastActive = time.Unix(lastActive[id], 0).Format("2006-02-01 3:04PM")
 		}
 		thisAVUser.Admin = user.Admin
 		thisAVUser.Paid = user.Paid

@@ -12,7 +12,7 @@
         <div class="page-container stats">
           <center>
           <div class="miners-container">
-            <table class="styled-table" style="margin-bottom: 0">
+            <table class="styled-table" style="margin-bottom: 0; max-width: 800px;">
             <thead>
               <tr>
                 <th>Miner</th>
@@ -27,9 +27,9 @@
             <tbody>
               {{range $name, $stats := .MinerList}}
               <tr {{if $stats.Late}}class="warn"{{end}}>
-                <td>{{$stats.Name}} {{if $stats.Late}} - OFFLINE {{$stats.HowLate}}{{end}}</td> 
+                <td>{{$stats.Name}}{{if $stats.Late}} - OFFLINE{{end}}</td>
                 <td>{{$stats.HashrateStr}}</td>
-                <td>{{$stats.UptimeDuration}}</td>
+                <td>{{if $stats.Late}}-{{$stats.HowLate}}{{else}}{{$stats.UptimeDuration}}{{end}}</td>
                 {{if $stats.Late}}
                 <td colspan="4" class="table-button" onclick="minerOnClick('{{$name}}')">REMOVE MINER</td>
                 {{else}}
