@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 )
 
 type OverallInfoTX struct {
@@ -62,7 +61,6 @@ var addrStats = make(map[int]AddrStatResponse)
 http://dmo-monitor.com:9143/getminingstats
 {
     "Addresses": "dy1qpfr5yhdkgs6jyuk945y23pskdxmy9ajefczsvm",
-    "TZOffset": -28800
 }
 NOTE: If an error occurs, then just do not update the stats....
 */
@@ -88,10 +86,7 @@ func txStats() {
 
 		var thisAddrStat AddrStatResponse
 
-		myTime := time.Now()
-		_, myTzOffset := myTime.Zone()
-
-		var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","Addresses":"` + addrsToMonitor + `", "TZOffset": ` + strconv.Itoa(myTzOffset) + `, "NumDays": ` + strconv.Itoa(myConfig.DailyStatDays) + `}`)
+		var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","Addresses":"` + addrsToMonitor + `", "NumDays": ` + strconv.Itoa(myConfig.DailyStatDays) + `}`)
 		req, err := http.NewRequest("GET", reqUrl.String(), data)
 		if err != nil {
 			log.Printf("Unable to make request to dmo-statservice: %s", err.Error())
