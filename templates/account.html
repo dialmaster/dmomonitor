@@ -39,7 +39,17 @@
                         
                         <input type="text" value="{{ .Addresses }}" name="addrs" required>
 
-                        <button type="submit" class="account-submit">Update Address</button>
+                        <br /><br />
+
+                        <label for="timezones">Timezone for Display</label>
+                        <select name="timezones">
+                            {{range $idx, $timezone := .TimeZones }}
+                                <option value="{{$timezone}}" {{if eq $timezone $.TimeZone}} selected="selected" {{end}}>{{$timezone}}</option>
+                            {{end}}
+                        </select>
+
+                        <br /><br />
+                        <button type="submit" class="account-submit">Update Address Info</button>
                     </form>
                 </div>
 

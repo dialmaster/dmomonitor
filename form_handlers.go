@@ -76,6 +76,9 @@ func doUpdateAddrs(c *gin.Context) {
 	session := sessions.Default(c)
 	userID := session.Get("ID").(int)
 	addr := c.PostForm("addrs")
+
+	timezone := c.PostForm("timezones")
+
 	var formErrors []string
 
 	count := 0
@@ -87,6 +90,12 @@ func doUpdateAddrs(c *gin.Context) {
 		c.Set("errors", formErrors)
 		accountPage(c)
 		return
+	}
+
+	_, err = db.Exec("UPDATE users SET timezone = ? WHERE ID = ?", timezone, userID)
+	if err != nil {
+		formErrors = append(formErrors, "Failed to update timezone")
+		log.Printf("Failed to update timezone in DB for user id %d: %s\n", userID, err.Error())
 	}
 
 	if count > 0 {

@@ -42,6 +42,8 @@ type pageVars struct {
 	Paid               int
 	MiningAddr         string
 	OtherData          template.HTML
+	TimeZone           string
+	TimeZones          []string
 }
 
 func getContextpVars(c *gin.Context) pageVars {
@@ -62,6 +64,8 @@ func accountPage(c *gin.Context) {
 		pVars.Errors = errInterface.([]string)
 	}
 
+	pVars.TimeZones = validZones
+	pVars.TimeZone = userIDList[pVars.UserID].TimeZone
 	pVars.Addresses = ""
 	for _, address := range userIDList[pVars.UserID].ReceivingAddresses {
 		pVars.Addresses += address.ReceivingAddress + ","
@@ -190,6 +194,7 @@ func statsPage(c *gin.Context) {
 	pVars.Totalminers = overallInfoTX[userID].TotalActiveMiners
 	pVars.NetHash = overallInfoTX[userID].NetHash
 	pVars.MiningAddr = ""
+	pVars.TimeZone = userIDList[userID].TimeZone
 
 	for _, address := range userIDList[userID].ReceivingAddresses {
 		pVars.MiningAddr += address.ReceivingAddress + ","

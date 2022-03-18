@@ -62,7 +62,7 @@
           {{if .NetHash}}
           <hr>
           <h4 style="margin-bottom:10px">Mining Stats for Address: {{ .MiningAddr }}</h4>
-          <h5 style="margin:0">Times and dates currently displayed in UTC timezone</h5>
+          <h5 style="margin:0">Times and dates currently displayed in {{ .TimeZone }} timezone</h5>
           <div class="mining-stats-container">
             <table class="styled-table">
               <thead>
@@ -205,7 +205,7 @@
               
               {{range $idx, $stats := .WalletHourlyStats}}
               <tr>
-                <td>{{$stats.Hour}}</td>
+                <td>{{$stats.HourStr}}</td>
                 <td>{{printf "%.2f" $stats.CoinCount}}</td>
                 <td>{{printf "%.2f" $stats.CoinsPerMinute}}</td>
               </tr>

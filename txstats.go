@@ -33,6 +33,7 @@ type DayStatTX struct {
 
 type HourStatTX struct {
 	Hour           int
+	HourStr        string
 	CoinCount      float64
 	CoinsPerMinute float64
 }
@@ -72,6 +73,7 @@ func txStats() {
 		Path:   "getminingstats",
 	}
 
+	mutex.Lock()
 	for userID, addresses := range userIDList {
 		// Not really an error... some users may not have configured this.
 		if len(addresses.ReceivingAddresses) == 0 {
@@ -86,7 +88,7 @@ func txStats() {
 
 		var thisAddrStat AddrStatResponse
 
-		var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","Addresses":"` + addrsToMonitor + `", "NumDays": ` + strconv.Itoa(myConfig.DailyStatDays) + `}`)
+		var data = bytes.NewBufferString(`{"jsonrpc":"1.0","id":"curltest","Addresses":"` + addrsToMonitor + `", "NumDays": ` + strconv.Itoa(myConfig.DailyStatDays) + `, "TimeZone": "` + addresses.TimeZone + `"}`)
 		req, err := http.NewRequest("GET", reqUrl.String(), data)
 		if err != nil {
 			log.Printf("Unable to make request to dmo-statservice: %s", err.Error())
@@ -108,9 +110,8 @@ func txStats() {
 			continue
 		}
 
-		mutex.Lock()
 		addrStats[userID] = thisAddrStat
-		mutex.Unlock()
 	}
+	mutex.Unlock()
 
 }

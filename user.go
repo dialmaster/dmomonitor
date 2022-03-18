@@ -15,6 +15,7 @@ type UserData struct {
 	Paid               int
 	Admin              int
 	LastActive         int64 // unix_epoch
+	TimeZone           string
 }
 
 type ReceivingAddress struct {
@@ -41,7 +42,7 @@ func updateUserLastActive(userID int) {
 
 // Get all users in the DB:
 func getAllUserInfo() {
-	results, err := db.Query("select password_hash, username, cloud_key, id, telegram_user_id, paid, admin, last_active from users")
+	results, err := db.Query("select password_hash, username, cloud_key, id, telegram_user_id, paid, admin, last_active, timezone from users")
 
 	if err != nil {
 		log.Printf("Unable to get user data from DB\n")
@@ -50,7 +51,7 @@ func getAllUserInfo() {
 
 	for results.Next() {
 		var thisUser UserData
-		err = results.Scan(&thisUser.PasswordHash, &thisUser.UserName, &thisUser.CloudKey, &thisUser.ID, &thisUser.TelegramUserId, &thisUser.Paid, &thisUser.Admin, &thisUser.LastActive)
+		err = results.Scan(&thisUser.PasswordHash, &thisUser.UserName, &thisUser.CloudKey, &thisUser.ID, &thisUser.TelegramUserId, &thisUser.Paid, &thisUser.Admin, &thisUser.LastActive, &thisUser.TimeZone)
 		if err != nil {
 			log.Printf("Unable to read user from DB\n")
 			continue
