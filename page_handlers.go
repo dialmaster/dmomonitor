@@ -197,10 +197,10 @@ func statsPage(c *gin.Context) {
 	pVars.TimeZone = userIDList[userID].TimeZone
 
 	for _, address := range userIDList[userID].ReceivingAddresses {
-		pVars.MiningAddr += address.ReceivingAddress + ","
+		pVars.MiningAddr += address.ReceivingAddress + ", "
 	}
 	if len(pVars.MiningAddr) > 2 {
-		pVars.MiningAddr = pVars.MiningAddr[:len(pVars.MiningAddr)-1]
+		pVars.MiningAddr = pVars.MiningAddr[:len(pVars.MiningAddr)-2]
 	}
 
 	pVars.CurrentPrice = currentPricePerDMO

@@ -2,6 +2,13 @@ a#stats-nav {
   color: #FFF !important;
 }
 
+h4.mining-addresses {
+  margin-bottom: 10px;
+  width: 900px;
+  overflow-wrap: break-word;
+  font-size: 18px;
+}
+
 .page-container.stats {
   padding-bottom: 125px;
   margin-top: 125px;
@@ -22,6 +29,10 @@ a#stats-nav {
   }
 
   @media screen and (max-device-width: 600px) {
+
+    h4.mining-addresses {
+      font-size: 15px;
+    }
 
     .hidden-mobile {
       display: none;
