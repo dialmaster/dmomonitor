@@ -31,9 +31,12 @@
             </div>
 
             <div class="account-container" id="accordion-1">
-                <h3 class="account-container-head">Mining Statistics Address</h3>
+                <h3 class="account-container-head">Mining Statistics Address(es)</h3>
                 <div class="account-container-block">
-                    <div class="account-container-help">For coins per day, hour, etc on monitor page</div>
+                    <div class="account-container-help">For coins per day, hour, etc on monitor page.
+                        For aggregate stats across multiple addresses,
+                        use a comma separated list. (Max 6)
+                    </div>
                     <form action="/doupdateaddrs" method="post" class="account-form">
                         <label for="addrs">Receiving Address</label>
                         

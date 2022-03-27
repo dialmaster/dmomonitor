@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -83,6 +84,15 @@ func doUpdateAddrs(c *gin.Context) {
 
 	count := 0
 
+	addrSlice := strings.Split(addr, ",")
+
+	if len(addrSlice) > 6 {
+		formErrors = append(formErrors, "Cannot enter more than 6 addresses!")
+		c.Set("errors", formErrors)
+		accountPage(c)
+		return
+	}
+
 	err := db.QueryRow("SELECT COUNT(*) FROM receiving_addresses where user_id = ?", userID).Scan(&count)
 	if err != nil {
 		formErrors = append(formErrors, "Failed to update receiving address")
@@ -98,17 +108,25 @@ func doUpdateAddrs(c *gin.Context) {
 		log.Printf("Failed to update timezone in DB for user id %d: %s\n", userID, err.Error())
 	}
 
-	if count > 0 {
-		_, err = db.Exec("UPDATE receiving_addresses SET receiving_address = ? WHERE user_id = ?", addr, userID)
-	} else {
-		_, err = db.Exec("INSERT INTO receiving_addresses (user_id, receiving_address, display_name) values (?, ?, 'Default Address')", userID, addr)
+	_, err = db.Exec("DELETE FROM receiving_addresses WHERE user_id = ?", userID)
+	if err != nil {
+		formErrors = append(formErrors, "Failed to DELETE old receiving addresses for user on update")
+		log.Printf("Failed to delete old receiving addresses in DB for user id %d: %s\n", userID, err.Error())
+		c.Set("errors", formErrors)
+		accountPage(c)
+		return
+	}
+
+	for i := 0; i < len(addrSlice); i++ {
+		thisAddr := addrSlice[i]
+		_, err = db.Exec("INSERT INTO receiving_addresses (user_id, receiving_address, display_name) values (?, ?, 'An Address')", userID, thisAddr)
 	}
 
 	if err != nil {
 		formErrors = append(formErrors, "Failed to update receiving address")
 		log.Printf("Failed to update receiving address in DB for user id %d: %s\n", userID, err.Error())
 	} else {
-		formErrors = append(formErrors, "Receiving address updated")
+		formErrors = append(formErrors, "Receiving address updated. Please wait one minute for change to be reflected on stats page!")
 		getAllUserInfo()
 		txStats()
 	}
