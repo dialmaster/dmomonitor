@@ -26,7 +26,7 @@
             </thead>
             <tbody>
               {{range $name, $stats := .MinerList}}
-              <tr {{if $stats.Late}}class="warn"{{end}}>
+              <tr class='{{if $stats.Late}} warn {{end}} {{ if eq $stats.HashrateStr "0" }} lowhash {{end}}' >
                 <td>{{$stats.Name}}{{if $stats.Late}} - OFFLINE{{end}}</td>
                 <td>{{$stats.HashrateStr}}</td>
                 <td>{{if $stats.Late}}-{{$stats.HowLate}}{{else}}{{$stats.UptimeDuration}}{{end}}</td>

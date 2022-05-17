@@ -2,6 +2,11 @@ a#stats-nav {
   color: #FFF !important;
 }
 
+.styled-table tbody tr.lowhash {
+  background-color: orange !important
+}
+
+
 h4.mining-addresses {
   margin-bottom: 10px;
   width: 900px;
